@@ -63,7 +63,7 @@ class VAE(nn.Module):
             nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.Conv2d(64, 3, kernel_size=3, padding=1),  # keep size 256
-            nn.Sigmoid(),
+            nn.Sigmoid(),  # tanh
         )
 
     def encode(self, x):
@@ -137,7 +137,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def build_cyclical_beta_schedule(
-    num_epochs, cycles=4, ratio=0.5, beta_start=0.0, beta_stop=1.0
+    num_epochs, cycles=16, ratio=0.5, beta_start=0, beta_stop=1.0
 ):
     """
     Create a cyclical beta schedule that increases and resets multiple times during training.
@@ -187,10 +187,10 @@ def train_improved_vae(
     model = VAE(latent_dim=latent_dim).to(device)
 
     # Uncomment to load from checkpoint
-    # model = load_trained_improved_vae(
-    #     checkpoint_path="/home/fer/Escritorio/dragons/dragon/vae/VAE_TOTAL/improved_vae_best_epoch_260.pth",
-    #     latent_dim=latent_dim,
-    # )
+    model = load_trained_improved_vae(
+        checkpoint_path="/home/fer/Escritorio/dragons/dragon/vae/VAE_TOTAL_4/checkpoint_epoch_181_interrupted.pth",
+        latent_dim=latent_dim,
+    )
 
     optimizer = optim.AdamW(model.parameters(), lr=learning_rate)
 
@@ -230,39 +230,60 @@ def train_improved_vae(
         progress_bar = tqdm(dataloader, desc=f"Epoch {epoch + 1}/{num_epochs}")
 
         for batch_idx, data in enumerate(progress_bar):
-            data = data.to(device, non_blocking=True)
+            try:
+                data = data.to(device, non_blocking=True)
 
-            optimizer.zero_grad()
+                optimizer.zero_grad()
 
-            recon_batch, mu, logvar, z = model(data)
+                recon_batch, mu, logvar, z = model(data)
 
-            loss, recon_loss, kl_loss = vae_loss(
-                recon_batch,
-                data,
-                mu,
-                logvar,
-                beta=beta,
-                reconstruction_weight=reconstruction_weight,
-            )
+                loss, recon_loss, kl_loss = vae_loss(
+                    recon_batch,
+                    data,
+                    mu,
+                    logvar,
+                    beta=beta,
+                    reconstruction_weight=reconstruction_weight,
+                )
 
-            loss.backward()
-            # torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-            optimizer.step()
+                loss.backward()
+                # torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                optimizer.step()
 
-            epoch_loss += loss.item()
-            epoch_recon_loss += recon_loss.item()
-            epoch_kl_loss += kl_loss.item()
+                epoch_loss += loss.item()
+                epoch_recon_loss += recon_loss.item()
+                epoch_kl_loss += kl_loss.item()
 
-            progress_bar.set_postfix(
-                {
-                    "Loss": f"{loss.item():.2f}",
-                    "Recon": f"{recon_loss.item():.2f}",
-                    "KL": f"{kl_loss.item():.2f}",
-                    "Beta": f"{beta:.3f}",
-                }
-            )
-            if batch_idx % 50 == 0:
-                torch.cuda.empty_cache()
+                progress_bar.set_postfix(
+                    {
+                        "Loss": f"{loss.item():.2f}",
+                        "Recon": f"{recon_loss.item():.2f}",
+                        "KL": f"{kl_loss.item():.2f}",
+                        "Beta": f"{beta:.3f}",
+                    }
+                )
+                if batch_idx % 50 == 0:
+                    torch.cuda.empty_cache()
+
+            except KeyboardInterrupt:
+                print("\nKeyboardInterrupt: Saving model checkpoint before exiting...")
+                checkpoint_path = os.path.join(
+                    save_dir, f"checkpoint_epoch_{epoch}_interrupted.pth"
+                )
+                torch.save(
+                    {
+                        "epoch": epoch,
+                        "model_state_dict": model.state_dict(),
+                        "optimizer_state_dict": optimizer.state_dict(),
+                        "loss": epoch_loss / len(dataloader),
+                        "recon_loss": epoch_recon_loss / len(dataloader),
+                        "kl_loss": epoch_kl_loss / len(dataloader),
+                        "beta": beta,
+                    },
+                    checkpoint_path,
+                )
+                print(f"Checkpoint saved to {checkpoint_path}")
+                break  # Exit the training loop
 
         avg_loss = epoch_loss / len(dataloader)
         avg_recon = epoch_recon_loss / len(dataloader)
@@ -376,7 +397,9 @@ def load_trained_improved_vae(checkpoint_path, latent_dim=128):
     model = VAE(latent_dim=latent_dim)
 
     if checkpoint_path.endswith(".pth"):
-        checkpoint = torch.load(checkpoint_path, map_location=device)
+        checkpoint = torch.load(
+            checkpoint_path, map_location=device, weights_only=False
+        )
         model.load_state_dict(checkpoint["model_state_dict"])
         print(f"Loaded checkpoint from epoch {checkpoint.get('epoch', 'unknown')}")
     else:
@@ -479,7 +502,7 @@ if __name__ == "__main__":
         [
             transforms.Resize((IMG_SIZE, IMG_SIZE)),
             transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
     )
 
@@ -525,7 +548,7 @@ if __name__ == "__main__":
         learning_rate=LEARNING_RATE,
         latent_dim=LATENT_DIM,
         reconstruction_weight=RECONSTRUCTION_WEIGHT,
-        save_dir="VAE_TOTAL_2",
+        save_dir="VAE_TOTAL_4",
     )
 
     print("Training completed!")
@@ -545,9 +568,6 @@ if __name__ == "__main__":
 
 # https://chatgpt.com/c/688ba4b7-c884-8328-9b78-8998ddde3d3b
 
-#  Use BatchNorm (optional but helps with stability)
-
-# Add nn.BatchNorm2d after each conv layer.
 # Add residual connections (ResNet-style VAE)
 
 # Use attention (like VQ-VAE-2)
