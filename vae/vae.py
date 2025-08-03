@@ -311,7 +311,7 @@ def train_improved_vae(
         }
 
         # Save best model
-        if avg_loss < best_loss:
+        if (avg_recon + avg_kl) < best_loss:
             if best_checkpoint_path and os.path.exists(best_checkpoint_path):
                 os.remove(best_checkpoint_path)
 
@@ -319,7 +319,7 @@ def train_improved_vae(
                 save_dir, f"improved_vae_best_epoch_{epoch + 1}.pth"
             )
             torch.save(checkpoint, best_checkpoint_path)
-            best_loss = avg_loss
+            best_loss = avg_recon + avg_kl
 
         # Generate samples more frequently to monitor diversity
         if (epoch + 1) % 10 == 0:
