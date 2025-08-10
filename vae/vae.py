@@ -188,7 +188,7 @@ def train_improved_vae(
 
     # Uncomment to load from checkpoint
     model = load_trained_improved_vae(
-        checkpoint_path="/home/fer/Escritorio/dragons/dragon/vae/VAE_TOTAL_4/checkpoint_epoch_181_interrupted.pth",
+        checkpoint_path="/home/fer/Escritorio/dragons/dragon/vae/VAE_TOTAL_3/checkpoint_epoch_138_interrupted.pth",
         latent_dim=latent_dim,
     )
 
