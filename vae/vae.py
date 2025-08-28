@@ -187,8 +187,8 @@ def train_improved_vae(
     model = VAE(latent_dim=latent_dim).to(device)
 
     # Uncomment to load from checkpoint
-    model = load_trained_improved_vae(
-        checkpoint_path="/home/fer/Escritorio/dragons/dragon/vae/VAE_TOTAL_3/checkpoint_epoch_138_interrupted.pth",
+    model, start_epoch = load_trained_improved_vae(
+        checkpoint_path="/home/fer/Escritorio/dragons/dragon/vae/VAE_TOTAL_6/improved_vae_best_epoch_418.pth",
         latent_dim=latent_dim,
     )
 
@@ -208,6 +208,7 @@ def train_improved_vae(
     beta_schedule = build_cyclical_beta_schedule(
         num_epochs=num_epochs, cycles=4, ratio=0.5, beta_start=0.0, beta_stop=1.0
     )
+    beta_schedule = np.ones(num_epochs)  # Flat schedule for simplicity
 
     model.train()
     losses = []
@@ -220,7 +221,7 @@ def train_improved_vae(
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
     print(f"Latent dimension: {latent_dim}")
 
-    for epoch in range(num_epochs):
+    for epoch in range(start_epoch, num_epochs):
         epoch_loss = 0
         epoch_recon_loss = 0
         epoch_kl_loss = 0
@@ -392,20 +393,16 @@ def plot_training_curves(losses, recon_losses, kl_losses, save_dir, epoch):
     plt.close()
 
 
-def load_trained_improved_vae(checkpoint_path, latent_dim=128):
+def load_trained_improved_vae(checkpoint_path, latent_dim=128, device="cuda"):
     """Load a trained Improved VAE model"""
     model = VAE(latent_dim=latent_dim)
 
-    if checkpoint_path.endswith(".pth"):
-        checkpoint = torch.load(
-            checkpoint_path, map_location=device, weights_only=False
-        )
-        model.load_state_dict(checkpoint["model_state_dict"])
-        print(f"Loaded checkpoint from epoch {checkpoint.get('epoch', 'unknown')}")
-    else:
-        model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
+    model.load_state_dict(checkpoint["model_state_dict"])
+    epoch = checkpoint.get("epoch", "unknown")
+    print(f"Loaded checkpoint from epoch {epoch}")
 
-    return model.to(device)
+    return model.to(device), epoch
 
 
 def test_latent_diversity(model, latent_dim=128, num_tests=16):
@@ -548,7 +545,7 @@ if __name__ == "__main__":
         learning_rate=LEARNING_RATE,
         latent_dim=LATENT_DIM,
         reconstruction_weight=RECONSTRUCTION_WEIGHT,
-        save_dir="VAE_TOTAL_4",
+        save_dir="VAE_TOTAL_7",
     )
 
     print("Training completed!")
