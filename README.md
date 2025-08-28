@@ -18,6 +18,10 @@ Click to hatch a unique dragon, collect them in your gallery, and combine any tw
 
 
 
+https://github.com/user-attachments/assets/fe76d6c2-069b-48b7-95bd-4160a0018ef5
+
+
+
 ## How It Works
 1. **VAE Model**  
    - A pre-trained Variational Autoencoder encodes and decodes dragons from a 1024-dimensional latent vector space.  
