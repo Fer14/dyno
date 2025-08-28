@@ -5,7 +5,6 @@
 An interactive browser-based game where you hatch and breed **AI-generated dragons** using a **Variational Autoencoder (VAE)**.  
 Click to hatch a unique dragon, collect them in your gallery, and combine any two to create entirely new hybrids.
 
----
 
 ## Features
 - **Hatch Eggs** → Click a magical egg to generate a one-of-a-kind dragon sprite.  
@@ -14,14 +13,10 @@ Click to hatch a unique dragon, collect them in your gallery, and combine any tw
 - **Offline Play** → Runs entirely in the browser with [ONNX.js](https://onnxruntime.ai/), no backend needed.  
 - **Infinite Variety** → The VAE latent space allows for endless color, pattern, and shape combinations.  
 
----
 
 ## Demo Video
 
 
----
-
----
 
 ## How It Works
 1. **VAE Model**  
@@ -37,5 +32,4 @@ Click to hatch a unique dragon, collect them in your gallery, and combine any tw
    - Their latent vectors are averaged (and optionally mutated) to produce a new vector.  
    - The result is decoded into a hybrid dragon.
 
----
 
