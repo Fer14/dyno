@@ -499,10 +499,6 @@
     <p class="subtitle" >Combine and discover unique mysterious dragons</p>
 
     <div class="model-upload">
-        <div class="file-input-wrapper">
-            <input type="file" id="modelFile" accept=".onnx">
-            <label for="modelFile" class="file-label">📜 Choose Dragon Model (.onnx)</label>
-        </div>
         <div class="model-status" id="modelStatus">No ancient tome selected...</div>
     </div>
 
@@ -694,18 +690,24 @@
             statusEl.textContent = "Deciphering dragon magic from the archives...";
 
             try {
-                const modelUrl = "https://github.com/Fer14/dyno/blob/1fc381f2ed66d800f36a72dd84fdb46010696f74/app/vae_decoder.onnx";
-                const response = await fetch(modelUrl);
-                if (!response.ok) throw new Error("Failed to fetch model.");
-                const arrayBuffer = await response.arrayBuffer(); // Get pure binary
-                session = await ort.InferenceSession.create(arrayBuffer);
+                // Local path to your model (place vae_decoder.onnx in the assets folder)
+                const modelPath = "assets/vae_decoder.onnx"; // adjust path if different
+                session = await ort.InferenceSession.create(modelPath);
                 modelLoaded = true;
                 statusEl.innerHTML = "Dragon magic successfully learned! <br/>The egg is ready to hatch...";
+
+                // Add magical glow to egg when model is loaded
+                document.getElementById('dragonEgg').style.boxShadow = `
+                    0 15px 40px rgba(16, 185, 129, 0.8),
+                    inset -20px -20px 40px rgba(0, 0, 0, 0.3),
+                    inset 20px 20px 40px rgba(255, 255, 255, 0.2)`;
+
             } catch (error) {
                 statusEl.textContent = "❌ Failed to decipher dragon magic.";
                 console.error(error);
             }
         }
+
 
         loadDragonModel();
 
