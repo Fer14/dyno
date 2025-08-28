@@ -7,7 +7,7 @@ Click to hatch a unique dragon, collect them in your gallery, and combine any tw
 
 ---
 
-## ✨ Features
+## Features
 - **Hatch Eggs** → Click a magical egg to generate a one-of-a-kind dragon sprite.  
 - **Gallery** → Every dragon you hatch is saved to your collection.  
 - **Breeding** → Select two dragons and combine their "DNA" (latent vectors) to create offspring with mixed traits.  
@@ -16,14 +16,14 @@ Click to hatch a unique dragon, collect them in your gallery, and combine any tw
 
 ---
 
-## 🎥 Demo Video
+## Demo Video
 
 
 ---
 
 ---
 
-## 🛠️ How It Works
+## How It Works
 1. **VAE Model**  
    - A pre-trained Variational Autoencoder encodes and decodes dragons from a 1024-dimensional latent vector space.  
    - The decoder runs in-browser via ONNX.js for instant rendering.
