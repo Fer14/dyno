@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>DYNO</title>
+    <link rel="icon" type="image/png" href="/static/assets/icon.png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sono:wght@200;300;400;500;600;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        :root {
+            --green: #199b34;
+            --green-dim: rgba(25,155,52,0.4);
+            --green-glow: rgba(16,185,129,0.5);
+            --red: #e3390b;
+            --bg: #0a0f0a;
+            --surface: rgba(16,185,129,0.06);
+            --border: rgba(25,155,52,0.2);
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        body {
+            background: var(--bg);
+            font-family: 'Sono', sans-serif;
+            color: #c9f0c9;
+            height: 100vh; height: 100dvh;
+            display: flex; flex-direction: column;
+            overflow: hidden; position: fixed; width: 100%;
+        }
+
+        /* ===== Top bar ===== */
+        .topbar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 16px; padding-top: calc(10px + var(--safe-top));
+            background: #0f1a0f; flex-shrink: 0; z-index: 10;
+            border-bottom: 1px solid var(--border);
+        }
+        .topbar img { width: 30px; height: 30px; }
+        .topbar h1 { font-size: 1.3rem; font-weight: 700; color: white; letter-spacing: 2px; flex: 1; }
+        .topbar .stat {
+            display: flex; align-items: center; gap: 4px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 3px 10px; font-size: 0.8rem; color: #6ee7b7;
+        }
+        .topbar .stat img { width: 16px; height: 16px; }
+
+        /* ===== Tab pages ===== */
+        .tab-page {
+            flex: 1; overflow-y: auto; overflow-x: hidden;
+            padding: 16px; -webkit-overflow-scrolling: touch;
+            display: none;
+        }
+        .tab-page.active { display: block; }
+
+        .page-title {
+            font-size: 1.1rem; font-weight: 600; color: white;
+            margin-bottom: 12px; letter-spacing: 1px;
+        }
+        .page-subtitle {
+            font-size: 0.8rem; color: rgba(255,255,255,0.4);
+            margin-bottom: 16px;
+        }
+
+        /* ===== Bottom nav ===== */
+        .bottom-nav {
+            flex-shrink: 0; z-index: 10;
+            background: #0f1a0f; border-top: 1px solid var(--border);
+            padding: 6px 0; padding-bottom: calc(6px + var(--safe-bottom));
+            display: flex; justify-content: space-around;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 2px; padding: 4px 12px; cursor: pointer;
+            opacity: 0.4; transition: all 0.2s; border: none; background: none;
+            font-family: 'Sono', sans-serif;
+        }
+        .nav-item.active { opacity: 1; }
+        .nav-item img { width: 24px; height: 24px; }
+        .nav-item span { font-size: 0.65rem; color: white; letter-spacing: 0.5px; }
+        .nav-item .nav-badge {
+            position: absolute; top: -2px; right: -6px;
+            background: var(--red); color: white; font-size: 0.55rem;
+            width: 16px; height: 16px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 1.5px solid #0f1a0f;
+        }
+        .nav-icon-wrap { position: relative; }
+
+        /* ===== EGGS TAB ===== */
+        .eggs-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 12px;
+        }
+        .egg-card {
+            display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; transition: transform 0.2s;
+            padding: 8px; border-radius: 12px;
+            background: var(--surface); border: 1px solid var(--border);
+        }
+        .egg-card:active { transform: scale(0.93); }
+        .egg-card img {
+            width: 56px; height: 72px; object-fit: contain;
+            filter: drop-shadow(0 3px 8px var(--green-glow));
+        }
+        .egg-card.bred img { filter: drop-shadow(0 3px 8px rgba(227,57,11,0.5)); }
+        .egg-card .egg-label {
+            font-size: 0.6rem; color: rgba(255,255,255,0.5); margin-top: 4px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .egg-card.bred .egg-label { color: var(--red); }
+        .empty-state {
+            text-align: center; padding: 40px 20px;
+            color: rgba(255,255,255,0.2); font-size: 0.9rem;
+        }
+
+        /* ===== DRAGONS TAB ===== */
+        .dragon-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+        .dragon-card {
+            border-radius: 12px; overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.12);
+            cursor: pointer; transition: all 0.2s; position: relative;
+            background: rgba(0,0,0,0.3); aspect-ratio: 1;
+        }
+        .dragon-card img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+        .dragon-card:active { transform: scale(0.95); }
+        .dragon-card .tag {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.75); font-size: 0.6rem;
+            text-align: center; padding: 3px; color: white;
+        }
+
+        /* ===== Dragon detail overlay ===== */
+        .detail-overlay {
+            position: fixed; inset: 0; z-index: 200;
+            background: rgba(0,0,0,0.95);
+            display: flex; flex-direction: column; align-items: center;
+            opacity: 0; visibility: hidden; transition: all 0.25s;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            overflow-y: auto; padding: 20px 16px;
+        }
+        .detail-overlay.active { opacity: 1; visibility: visible; }
+        .detail-close {
+            align-self: flex-end; background: rgba(255,255,255,0.1);
+            border: 1.5px solid rgba(255,255,255,0.2); color: white;
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; cursor: pointer; margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        .detail-close:active { background: rgba(255,255,255,0.2); }
+        .detail-img {
+            width: min(80vw, 350px); height: min(80vw, 350px);
+            border-radius: 16px; border: 3px solid white;
+            image-rendering: pixelated;
+            box-shadow: 0 0 40px var(--green-glow);
+            flex-shrink: 0;
+        }
+        .detail-name {
+            color: white; font-size: 1.3rem; font-weight: 700;
+            margin-top: 16px; letter-spacing: 1px;
+        }
+        .detail-lineage {
+            margin-top: 16px; width: 100%; max-width: 350px;
+        }
+        .lineage-label {
+            font-size: 0.7rem; color: rgba(255,255,255,0.4);
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
+        }
+        .lineage-row {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; padding: 10px;
+        }
+        .lineage-row img {
+            width: 48px; height: 48px; border-radius: 8px;
+            border: 1.5px solid rgba(255,255,255,0.2);
+            image-rendering: pixelated;
+        }
+        .lineage-plus { color: rgba(255,255,255,0.3); font-size: 1rem; }
+        .lineage-arrow { color: rgba(255,255,255,0.3); font-size: 0.8rem; margin: 0 auto; }
+        .lineage-wild {
+            font-size: 0.8rem; color: rgba(255,255,255,0.3);
+            font-style: italic; padding: 8px;
+        }
+
+        /* ===== BREED TAB ===== */
+        .breed-dragons-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 10px; margin-bottom: 16px;
+        }
+        .breed-card {
+            border-radius: 12px; overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.12);
+            cursor: pointer; transition: all 0.2s; position: relative;
+            background: rgba(0,0,0,0.3); aspect-ratio: 1;
+        }
+        .breed-card img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+        .breed-card:active { transform: scale(0.95); }
+        .breed-card.selected {
+            border: 3px solid var(--red);
+            box-shadow: 0 0 12px rgba(227,57,11,0.5);
+        }
+        .breed-card .tag {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.75); font-size: 0.6rem;
+            text-align: center; padding: 3px; color: white;
+        }
+
+        .breed-preview {
+            display: flex; align-items: center; justify-content: center;
+            gap: 12px; padding: 16px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; margin-bottom: 16px;
+        }
+        .breed-preview-slot {
+            width: 64px; height: 64px; border-radius: 10px;
+            border: 2px dashed rgba(227,57,11,0.3);
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; background: rgba(227,57,11,0.04);
+        }
+        .breed-preview-slot.filled { border-style: solid; border-color: var(--red); }
+        .breed-preview-slot img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+        .breed-preview-slot .ph { color: rgba(255,255,255,0.15); font-size: 1.5rem; }
+        .breed-sym { color: rgba(255,255,255,0.25); font-size: 1.5rem; }
+        .breed-egg-icon { width: 32px; height: 42px; opacity: 0.3; }
+
+        .breed-action-btn {
+            display: block; width: 100%; padding: 14px;
+            background: var(--red); color: white; border: none;
+            border-radius: 12px; font-family: 'Sono', sans-serif;
+            font-size: 1rem; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; opacity: 0.3; pointer-events: none;
+        }
+        .breed-action-btn.ready { opacity: 1; pointer-events: auto; }
+        .breed-action-btn.ready:active { transform: scale(0.97); background: #c32a00; }
+
+        /* ===== Hatch overlay ===== */
+        .hatch-overlay {
+            position: fixed; inset: 0; z-index: 300;
+            background: rgba(0,0,0,0.95);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: all 0.3s;
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+        }
+        .hatch-overlay.active { opacity: 1; visibility: visible; }
+
+        .hatch-egg { width: 140px; height: 182px; }
+        .hatch-egg img {
+            width: 100%; height: 100%; object-fit: contain;
+            filter: drop-shadow(0 6px 20px var(--green-glow));
+        }
+        .hatch-egg.shaking { animation: shake 0.4s infinite ease-in-out; }
+        .hatch-egg.cracking img {
+            filter: drop-shadow(0 6px 30px rgba(16,185,129,1)) brightness(1.3);
+            transition: filter 0.4s;
+        }
+
+        .hatch-spinner {
+            width: 40px; height: 40px; margin-top: 1.5rem;
+            border: 3px solid rgba(16,185,129,0.2);
+            border-top-color: var(--green); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .hatch-spinner.on { opacity: 1; }
+
+        .hatch-result {
+            margin-top: 1.5rem; text-align: center;
+            opacity: 0; transform: scale(0.5); transition: all 0.6s;
+        }
+        .hatch-result.show { opacity: 1; transform: scale(1); }
+        .hatch-result img {
+            width: 200px; height: 200px; border-radius: 16px;
+            border: 3px solid white; image-rendering: pixelated;
+            box-shadow: 0 0 30px var(--green-glow);
+        }
+        .hatch-result-label {
+            color: white; font-size: 1.1rem; font-weight: 600;
+            margin-top: 0.8rem; letter-spacing: 1px;
+        }
+        .hatch-continue {
+            margin-top: 1.2rem; background: rgba(255,255,255,0.08);
+            border: 1.5px solid rgba(255,255,255,0.25);
+            color: white; padding: 10px 32px; border-radius: 10px;
+            font-family: 'Sono', sans-serif; font-size: 0.9rem;
+            cursor: pointer; opacity: 0; pointer-events: none; transition: all 0.3s;
+        }
+        .hatch-continue.show { opacity: 1; pointer-events: auto; }
+        .hatch-continue:active { background: rgba(255,255,255,0.15); }
+
+        /* Rarity badges */
+        .rarity-badge {
+            display: inline-block; padding: 2px 7px; border-radius: 6px;
+            font-size: 0.55rem; font-weight: 700; letter-spacing: 0.5px;
+            text-transform: uppercase; line-height: 1.4;
+        }
+        .rarity-common     { background: #6b7280; color: #e5e7eb; }
+        .rarity-uncommon   { background: #22863a; color: #d1fae5; }
+        .rarity-rare        { background: #2563eb; color: #dbeafe; }
+        .rarity-epic        { background: #7c3aed; color: #ede9fe; }
+        .rarity-legendary   { background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; }
+
+        .dragon-card .rarity-badge, .breed-card .rarity-badge {
+            position: absolute; top: 4px; left: 4px;
+        }
+        .detail-name-row {
+            display: flex; align-items: center; gap: 8px; margin-top: 12px;
+        }
+        .detail-name-input {
+            background: transparent; border: none; border-bottom: 1.5px solid rgba(255,255,255,0.2);
+            color: white; font-family: 'Sono', sans-serif; font-size: 1.2rem;
+            font-weight: 700; letter-spacing: 1px; text-align: center;
+            padding: 4px 8px; width: 100%; max-width: 300px;
+            transition: border-color 0.2s;
+        }
+        .detail-name-input:focus {
+            outline: none; border-bottom-color: var(--green);
+        }
+        .detail-name-edit {
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.5); border-radius: 6px; padding: 4px 8px;
+            font-size: 0.65rem; cursor: pointer; font-family: 'Sono', sans-serif;
+            white-space: nowrap;
+        }
+        .detail-name-edit:active { background: rgba(255,255,255,0.15); }
+
+        .detail-rarity {
+            margin-top: 8px; display: flex; align-items: center; gap: 8px;
+        }
+        .detail-rarity .rarity-badge { font-size: 0.7rem; padding: 3px 10px; }
+
+        /* Rarity sections in dragons tab */
+        .rarity-section { margin-bottom: 16px; }
+        .rarity-section-header {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 8px; padding-left: 2px;
+        }
+        .rarity-section-header .rarity-badge { font-size: 0.65rem; padding: 2px 8px; }
+        .rarity-section-count {
+            font-size: 0.7rem; color: rgba(255,255,255,0.3);
+        }
+        .detail-rarity-score {
+            font-size: 0.75rem; color: rgba(255,255,255,0.4);
+        }
+        .hatch-rarity {
+            margin-top: 8px;
+        }
+        .hatch-rarity .rarity-badge { font-size: 0.7rem; padding: 3px 10px; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            10% { transform: translateX(-5px) rotate(-2deg); }
+            20% { transform: translateX(5px) rotate(2deg); }
+            30% { transform: translateX(-4px) rotate(-1deg); }
+            40% { transform: translateX(4px) rotate(1deg); }
+            50% { transform: translateX(-3px) rotate(-0.5deg); }
+            60% { transform: translateX(3px) rotate(0.5deg); }
+            70% { transform: translateX(-2px) rotate(0deg); }
+            80% { transform: translateX(2px) rotate(0deg); }
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+    <img src="/static/assets/icon.png" alt="D">
+    <h1>DYNO</h1>
+    <div class="stat">
+        <img src="/static/assets/egg1.png"> <span id="eggStat">5</span>
+    </div>
+    <div class="stat" style="margin-left:4px;">
+        <img src="/static/assets/black_dragon.png"> <span id="dragonStat">0</span>
+    </div>
+</div>
+
+<!-- Tab: Eggs -->
+<div class="tab-page active" id="pageEggs">
+    <div class="page-title">Nursery</div>
+    <div class="page-subtitle">Tap an egg to hatch it</div>
+    <div class="eggs-grid" id="eggsGrid"></div>
+</div>
+
+<!-- Tab: Dragons -->
+<div class="tab-page" id="pageDragons">
+    <div class="page-title">Your Dragons</div>
+    <div class="page-subtitle">Tap a dragon to inspect it</div>
+    <div id="dragonsGrid"></div>
+</div>
+
+<!-- Tab: Breed -->
+<div class="tab-page" id="pageBreed">
+    <div class="page-title">Breeding</div>
+    <div class="page-subtitle">Select two dragons to breed</div>
+    <div class="breed-preview" id="breedPreview">
+        <div class="breed-preview-slot" id="bSlot1"><span class="ph">?</span></div>
+        <span class="breed-sym">&times;</span>
+        <div class="breed-preview-slot" id="bSlot2"><span class="ph">?</span></div>
+        <span class="breed-sym">=</span>
+        <img class="breed-egg-icon" src="/static/assets/egg1.png">
+    </div>
+    <button class="breed-action-btn" id="breedBtn">Breed!</button>
+    <div style="margin-top:16px;">
+        <div class="breed-dragons-grid" id="breedGrid"></div>
+    </div>
+</div>
+
+<!-- Bottom nav -->
+<div class="bottom-nav">
+    <button class="nav-item active" data-page="pageEggs">
+        <div class="nav-icon-wrap">
+            <img src="/static/assets/egg1.png">
+        </div>
+        <span>Eggs</span>
+    </button>
+    <button class="nav-item" data-page="pageDragons">
+        <div class="nav-icon-wrap">
+            <img src="/static/assets/black_dragon.png">
+        </div>
+        <span>Dragons</span>
+    </button>
+    <button class="nav-item" data-page="pageBreed">
+        <div class="nav-icon-wrap">
+            <img src="/static/assets/hearts.png">
+        </div>
+        <span>Breed</span>
+    </button>
+</div>
+
+<!-- Dragon detail overlay -->
+<div class="detail-overlay" id="detailOverlay">
+    <div class="detail-close" id="detailClose">&times;</div>
+    <img class="detail-img" id="detailImg" src="">
+    <div class="detail-name-row">
+        <input class="detail-name-input" id="detailNameInput" type="text" maxlength="30">
+        <button class="detail-name-edit" id="detailRandomName">Random</button>
+    </div>
+    <div style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-top:2px;" id="detailId"></div>
+    <div class="detail-rarity" id="detailRarity"></div>
+    <div class="detail-lineage" id="detailLineage"></div>
+</div>
+
+<!-- Hatch overlay -->
+<div class="hatch-overlay" id="hatchOverlay">
+    <div class="hatch-egg" id="hatchEgg"><img src="/static/assets/egg1.png" id="hatchEggImg"></div>
+    <div class="hatch-spinner" id="hatchSpinner"></div>
+    <div class="hatch-result" id="hatchResult">
+        <img id="hatchResultImg" src="">
+        <div class="hatch-rarity" id="hatchRarity"></div>
+        <div class="detail-name-row" style="margin-top:12px;justify-content:center;">
+            <input class="detail-name-input" id="hatchNameInput" type="text" maxlength="30" placeholder="Name your dragon...">
+            <button class="detail-name-edit" id="hatchRandomName">Random</button>
+        </div>
+    </div>
+    <button class="hatch-continue" id="hatchContinue">Continue</button>
+</div>
+
+<script>
+    // ===== State =====
+    // egg: { type:'random' } or { type:'bred', latent:[...], parent1Id, parent2Id }
+    // dragon: { id, latent:[...], imgSrc (base64), parent1Id:null|int, parent2Id:null|int }
+    let eggs = [];
+    let dragons = [];
+    let nextId = 1;
+    let selected = [];   // indices for breeding tab
+    let hatching = false;
+    let hatchedDragonPending = null;
+
+    for (let i = 0; i < 5; i++) eggs.push({ type: 'random' });
+
+    // ===== Name generator =====
+    // Deterministic from latent vector so the same dragon always gets the same default name
+    const NAME_PREFIXES = [
+        'Ash','Blaze','Cinder','Drake','Ember','Fang','Gloom','Hex',
+        'Ignis','Jade','Kael','Luna','Myst','Nyx','Onyx','Pyra',
+        'Quill','Rune','Shadow','Thorn','Umbra','Vex','Wynn','Xar',
+        'Yara','Zeph','Aura','Bolt','Crux','Dusk','Echo','Flux',
+        'Grim','Haze','Iron','Jinx','Knox','Lux','Moss','Noir',
+        'Opal','Pulse','Rage','Soot','Talon','Vale','Wisp','Zor'
+    ];
+    const NAME_SUFFIXES = [
+        'ion','ax','or','is','ra','en','os','ar','ix','ul',
+        'yn','ok','el','us','ia','ek','on','as','ir','um',
+        'ith','ael','ous','ire','yx','een','orn','usk','ane','olt'
+    ];
+    const NAME_TITLES = [
+        'the Fierce','the Wise','the Swift','the Ancient','the Wild',
+        'the Cursed','the Bright','the Dark','the Storm','the Silent',
+        'the Brave','the Sly','the Bold','the Pale','the Grim',
+        'the Lost','the Keen','the Dread','the Pure','the Vile'
+    ];
+
+    function generateName(latent) {
+        // Use first few latent values as seed
+        const seed1 = Math.abs(latent[0] * 1000) | 0;
+        const seed2 = Math.abs(latent[1] * 1000) | 0;
+        const seed3 = Math.abs(latent[2] * 1000) | 0;
+        const prefix = NAME_PREFIXES[seed1 % NAME_PREFIXES.length];
+        const suffix = NAME_SUFFIXES[seed2 % NAME_SUFFIXES.length];
+        const title = NAME_TITLES[seed3 % NAME_TITLES.length];
+        return prefix + suffix + ' ' + title;
+    }
+
+    // ===== Rarity system =====
+    // L2 norm of a 1024-dim standard normal vector follows a chi distribution.
+    // Expected value ≈ sqrt(1024) ≈ 32.0, std ≈ ~0.7
+    // We use the deviation from the expected norm to assign rarity.
+    const EXPECTED_NORM = Math.sqrt(1024); // ~32.0
+
+    const NORM_STD = 0.71; // empirical std of the norm for 1024-dim standard normal
+
+    function computeRarity(latent) {
+        let sumSq = 0;
+        for (let i = 0; i < latent.length; i++) sumSq += latent[i] * latent[i];
+        const norm = Math.sqrt(sumSq);
+        const sigma = Math.abs(norm - EXPECTED_NORM) / NORM_STD;
+        // ~68% Common, ~19% Uncommon, ~9% Rare, ~3% Epic, ~1% Legendary
+        if (sigma >= 2.5) return { tier: 'legendary', label: 'Legendary', norm, sigma };
+        if (sigma >= 2.0) return { tier: 'epic',      label: 'Epic',      norm, sigma };
+        if (sigma >= 1.5) return { tier: 'rare',       label: 'Rare',      norm, sigma };
+        if (sigma >= 1.0) return { tier: 'uncommon',   label: 'Uncommon',  norm, sigma };
+        return { tier: 'common', label: 'Common', norm, sigma };
+    }
+
+    function rarityBadgeHTML(latent) {
+        const r = computeRarity(latent);
+        return '<span class="rarity-badge rarity-' + r.tier + '">' + r.label + '</span>';
+    }
+
+    // ===== Tab navigation =====
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+            document.getElementById(btn.dataset.page).classList.add('active');
+            if (btn.dataset.page === 'pageBreed') renderBreedTab();
+        });
+    });
+
+    // ===== Render all =====
+    function render() {
+        document.getElementById('eggStat').textContent = eggs.length;
+        document.getElementById('dragonStat').textContent = dragons.length;
+        renderEggsTab();
+        renderDragonsTab();
+        renderBreedTab();
+    }
+
+    // ===== EGGS TAB =====
+    function renderEggsTab() {
+        const grid = document.getElementById('eggsGrid');
+        grid.innerHTML = '';
+        if (!eggs.length) {
+            grid.innerHTML = '<div class="empty-state">No eggs. Breed two dragons to get more!</div>';
+            return;
+        }
+        eggs.forEach((egg, i) => {
+            const card = document.createElement('div');
+            card.className = 'egg-card' + (egg.type === 'bred' ? ' bred' : '');
+            const label = egg.type === 'bred' ? 'Bred' : 'Wild';
+            card.innerHTML = '<img src="/static/assets/egg1.png"><div class="egg-label">' + label + '</div>';
+            card.addEventListener('click', () => hatchEgg(i));
+            grid.appendChild(card);
+        });
+    }
+
+    // ===== DRAGONS TAB =====
+    const RARITY_ORDER = ['legendary', 'epic', 'rare', 'uncommon', 'common'];
+    const RARITY_LABELS = { legendary: 'Legendary', epic: 'Epic', rare: 'Rare', uncommon: 'Uncommon', common: 'Common' };
+
+    function renderDragonsTab() {
+        const container = document.getElementById('dragonsGrid');
+        container.innerHTML = '';
+        if (!dragons.length) {
+            container.innerHTML = '<div class="empty-state">Hatch an egg to get your first dragon!</div>';
+            return;
+        }
+
+        // Group dragons by rarity
+        const groups = {};
+        dragons.forEach(d => {
+            const r = computeRarity(d.latent);
+            if (!groups[r.tier]) groups[r.tier] = [];
+            groups[r.tier].push(d);
+        });
+
+        // Render each rarity section in order (rarest first)
+        RARITY_ORDER.forEach(tier => {
+            if (!groups[tier] || !groups[tier].length) return;
+            const section = document.createElement('div');
+            section.className = 'rarity-section';
+
+            const header = document.createElement('div');
+            header.className = 'rarity-section-header';
+            header.innerHTML = '<span class="rarity-badge rarity-' + tier + '">' + RARITY_LABELS[tier] + '</span>'
+                + '<span class="rarity-section-count">' + groups[tier].length + '</span>';
+            section.appendChild(header);
+
+            const grid = document.createElement('div');
+            grid.className = 'dragon-grid';
+            groups[tier].forEach(d => {
+                const card = document.createElement('div');
+                card.className = 'dragon-card';
+                const shortName = d.name.split(' ')[0]; // Just the first name on the card
+                card.innerHTML = '<img src="data:image/png;base64,' + d.imgSrc + '">'
+                    + '<div class="tag">' + shortName + '</div>';
+                card.addEventListener('click', () => showDetail(d));
+                grid.appendChild(card);
+            });
+            section.appendChild(grid);
+            container.appendChild(section);
+        });
+    }
+
+    // ===== DRAGON DETAIL =====
+    let detailDragon = null;
+
+    function showDetail(dragon) {
+        detailDragon = dragon;
+        document.getElementById('detailImg').src = 'data:image/png;base64,' + dragon.imgSrc;
+        document.getElementById('detailNameInput').value = dragon.name;
+        document.getElementById('detailId').textContent = 'Dragon #' + dragon.id;
+
+        // Rarity info
+        const r = computeRarity(dragon.latent);
+        const rarityDiv = document.getElementById('detailRarity');
+        rarityDiv.innerHTML = '<span class="rarity-badge rarity-' + r.tier + '">' + r.label + '</span>'
+            + '<span class="detail-rarity-score">' + r.sigma.toFixed(1) + 'σ from mean</span>';
+
+        const lineageDiv = document.getElementById('detailLineage');
+        lineageDiv.innerHTML = '';
+
+        if (dragon.parent1Id && dragon.parent2Id) {
+            const p1 = dragons.find(d => d.id === dragon.parent1Id);
+            const p2 = dragons.find(d => d.id === dragon.parent2Id);
+            lineageDiv.innerHTML = '<div class="lineage-label">Parents</div>';
+            const row = document.createElement('div');
+            row.className = 'lineage-row';
+            if (p1) row.innerHTML += '<img src="data:image/png;base64,' + p1.imgSrc + '" title="Dragon #' + p1.id + '">';
+            else row.innerHTML += '<div style="width:48px;height:48px;border-radius:8px;background:rgba(255,255,255,0.05);"></div>';
+            row.innerHTML += '<span class="lineage-plus">&times;</span>';
+            if (p2) row.innerHTML += '<img src="data:image/png;base64,' + p2.imgSrc + '" title="Dragon #' + p2.id + '">';
+            else row.innerHTML += '<div style="width:48px;height:48px;border-radius:8px;background:rgba(255,255,255,0.05);"></div>';
+            lineageDiv.appendChild(row);
+
+            // Show parent names
+            const names = document.createElement('div');
+            names.style.cssText = 'display:flex;justify-content:space-around;margin-top:6px;font-size:0.7rem;color:rgba(255,255,255,0.4);';
+            names.innerHTML = '<span>' + (p1 ? p1.name.split(' ')[0] : '?') + '</span><span>' + (p2 ? p2.name.split(' ')[0] : '?') + '</span>';
+            lineageDiv.appendChild(names);
+
+            // Grandparents
+            const gps = [p1, p2].filter(p => p && p.parent1Id && p.parent2Id);
+            if (gps.length) {
+                const gpLabel = document.createElement('div');
+                gpLabel.className = 'lineage-label';
+                gpLabel.style.marginTop = '12px';
+                gpLabel.textContent = 'Grandparents';
+                lineageDiv.appendChild(gpLabel);
+                gps.forEach(p => {
+                    const gp1 = dragons.find(d => d.id === p.parent1Id);
+                    const gp2 = dragons.find(d => d.id === p.parent2Id);
+                    const gr = document.createElement('div');
+                    gr.className = 'lineage-row';
+                    gr.style.marginBottom = '6px';
+                    const makeThumb = (d) => d
+                        ? '<img src="data:image/png;base64,' + d.imgSrc + '" style="width:36px;height:36px;" title="#' + d.id + '">'
+                        : '<div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.05);"></div>';
+                    gr.innerHTML = makeThumb(gp1) + '<span class="lineage-plus" style="font-size:0.8rem;">&times;</span>' + makeThumb(gp2)
+                        + '<span class="lineage-arrow">&rarr; #' + p.id + '</span>';
+                    lineageDiv.appendChild(gr);
+                });
+            }
+        } else {
+            lineageDiv.innerHTML = '<div class="lineage-label">Origin</div><div class="lineage-wild">Wild hatched (no parents)</div>';
+        }
+
+        // Show children
+        const children = dragons.filter(d => d.parent1Id === dragon.id || d.parent2Id === dragon.id);
+        if (children.length) {
+            const childLabel = document.createElement('div');
+            childLabel.className = 'lineage-label';
+            childLabel.style.marginTop = '12px';
+            childLabel.textContent = 'Offspring (' + children.length + ')';
+            lineageDiv.appendChild(childLabel);
+            const childRow = document.createElement('div');
+            childRow.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
+            children.forEach(c => {
+                const thumb = document.createElement('img');
+                thumb.src = 'data:image/png;base64,' + c.imgSrc;
+                thumb.style.cssText = 'width:48px;height:48px;border-radius:8px;border:1.5px solid rgba(255,255,255,0.2);image-rendering:pixelated;cursor:pointer;';
+                thumb.title = 'Dragon #' + c.id;
+                thumb.addEventListener('click', () => showDetail(c));
+                childRow.appendChild(thumb);
+            });
+            lineageDiv.appendChild(childRow);
+        }
+
+        document.getElementById('detailOverlay').classList.add('active');
+    }
+
+    // Save name on input change
+    document.getElementById('detailNameInput').addEventListener('input', (e) => {
+        if (detailDragon) {
+            detailDragon.name = e.target.value;
+            render();
+        }
+    });
+
+    // Random name button
+    document.getElementById('detailRandomName').addEventListener('click', () => {
+        if (!detailDragon) return;
+        // Generate a new random name by shuffling seeds
+        const rndName = NAME_PREFIXES[(Math.random() * NAME_PREFIXES.length) | 0]
+            + NAME_SUFFIXES[(Math.random() * NAME_SUFFIXES.length) | 0]
+            + ' ' + NAME_TITLES[(Math.random() * NAME_TITLES.length) | 0];
+        detailDragon.name = rndName;
+        document.getElementById('detailNameInput').value = rndName;
+        render();
+    });
+
+    document.getElementById('detailClose').addEventListener('click', () => {
+        document.getElementById('detailOverlay').classList.remove('active');
+    });
+    document.getElementById('detailOverlay').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('detailOverlay'))
+            document.getElementById('detailOverlay').classList.remove('active');
+    });
+
+    // ===== BREED TAB =====
+    function renderBreedTab() {
+        // Grid
+        const grid = document.getElementById('breedGrid');
+        grid.innerHTML = '';
+        if (!dragons.length) {
+            grid.innerHTML = '<div class="empty-state">Hatch some dragons first!</div>';
+        } else {
+            dragons.forEach((d, i) => {
+                const card = document.createElement('div');
+                card.className = 'breed-card' + (selected.includes(i) ? ' selected' : '');
+                const shortName = d.name.split(' ')[0];
+                card.innerHTML = '<img src="data:image/png;base64,' + d.imgSrc + '">'
+                    + rarityBadgeHTML(d.latent)
+                    + '<div class="tag">' + shortName + '</div>';
+                card.addEventListener('click', () => {
+                    const pos = selected.indexOf(i);
+                    if (pos >= 0) selected.splice(pos, 1);
+                    else if (selected.length < 2) selected.push(i);
+                    else { selected.shift(); selected.push(i); }
+                    renderBreedTab();
+                });
+                grid.appendChild(card);
+            });
+        }
+
+        // Preview slots
+        const s1 = document.getElementById('bSlot1');
+        const s2 = document.getElementById('bSlot2');
+        if (selected.length >= 1 && dragons[selected[0]]) {
+            s1.innerHTML = '<img src="data:image/png;base64,' + dragons[selected[0]].imgSrc + '">';
+            s1.classList.add('filled');
+        } else { s1.innerHTML = '<span class="ph">?</span>'; s1.classList.remove('filled'); }
+        if (selected.length >= 2 && dragons[selected[1]]) {
+            s2.innerHTML = '<img src="data:image/png;base64,' + dragons[selected[1]].imgSrc + '">';
+            s2.classList.add('filled');
+        } else { s2.innerHTML = '<span class="ph">?</span>'; s2.classList.remove('filled'); }
+
+        document.getElementById('breedBtn').classList.toggle('ready', selected.length === 2);
+    }
+
+    document.getElementById('breedBtn').addEventListener('click', async () => {
+        if (selected.length !== 2) return;
+        const d1 = dragons[selected[0]];
+        const d2 = dragons[selected[1]];
+        const resp = await fetch('/api/breed', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ latent1: d1.latent, latent2: d2.latent })
+        });
+        const data = await resp.json();
+        eggs.push({ type: 'bred', latent: data.latent, parent1Id: d1.id, parent2Id: d2.id });
+        selected = [];
+        render();
+        // Switch to eggs tab
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        document.querySelector('[data-page="pageEggs"]').classList.add('active');
+        document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+        document.getElementById('pageEggs').classList.add('active');
+    });
+
+    // ===== HATCHING =====
+    async function hatchEgg(eggIdx) {
+        if (hatching) return;
+        hatching = true;
+        const egg = eggs[eggIdx];
+        const overlay = document.getElementById('hatchOverlay');
+        const eggEl = document.getElementById('hatchEgg');
+        const eggImg = document.getElementById('hatchEggImg');
+        const spinner = document.getElementById('hatchSpinner');
+        const result = document.getElementById('hatchResult');
+        const resultImg = document.getElementById('hatchResultImg');
+        const resultLabel = document.getElementById('hatchResultLabel');
+        const continueBtn = document.getElementById('hatchContinue');
+
+        eggEl.className = 'hatch-egg';
+        eggEl.style.display = '';
+        eggImg.src = '/static/assets/egg1.png';
+        spinner.classList.remove('on');
+        result.classList.remove('show');
+        continueBtn.classList.remove('show');
+        overlay.classList.add('active');
+
+        await sleep(200);
+        eggEl.classList.add('shaking');
+        await sleep(1800);
+        eggEl.classList.remove('shaking');
+        eggEl.classList.add('cracking');
+        eggImg.src = '/static/assets/egg3.png';
+        spinner.classList.add('on');
+
+        try {
+            let data;
+            if (egg.type === 'bred') {
+                const resp = await fetch('/api/hatch_latent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ latent: egg.latent })
+                });
+                data = await resp.json();
+            } else {
+                const resp = await fetch('/api/hatch', { method: 'POST' });
+                data = await resp.json();
+            }
+
+            spinner.classList.remove('on');
+            eggEl.style.display = 'none';
+            resultImg.src = 'data:image/png;base64,' + data.image;
+            const id = nextId++;
+            const defaultName = generateName(data.latent);
+            const r = computeRarity(data.latent);
+            document.getElementById('hatchNameInput').value = defaultName;
+            document.getElementById('hatchRarity').innerHTML =
+                '<span class="rarity-badge rarity-' + r.tier + '">' + r.label + '</span>';
+            result.classList.add('show');
+            await sleep(500);
+            continueBtn.classList.add('show');
+
+            // Store dragon ref so continue button can read the final name
+            hatchedDragonPending = {
+                id,
+                name: defaultName,
+                latent: data.latent,
+                imgSrc: data.image,
+                parent1Id: egg.parent1Id || null,
+                parent2Id: egg.parent2Id || null
+            };
+            eggs.splice(eggIdx, 1);
+        } catch (err) {
+            console.error(err);
+            spinner.classList.remove('on');
+            resultLabel.textContent = 'Something went wrong...';
+            result.classList.add('show');
+            continueBtn.classList.add('show');
+        }
+    }
+
+    document.getElementById('hatchContinue').addEventListener('click', () => {
+        if (hatchedDragonPending) {
+            // Read the final name from the input
+            const finalName = document.getElementById('hatchNameInput').value.trim() || hatchedDragonPending.name;
+            hatchedDragonPending.name = finalName;
+            dragons.push(hatchedDragonPending);
+            hatchedDragonPending = null;
+            render();
+        }
+        document.getElementById('hatchOverlay').classList.remove('active');
+        hatching = false;
+    });
+
+    // Hatch name input syncs to pending dragon
+    document.getElementById('hatchNameInput').addEventListener('input', (e) => {
+        if (hatchedDragonPending) hatchedDragonPending.name = e.target.value;
+    });
+
+    // Random name in hatch overlay
+    document.getElementById('hatchRandomName').addEventListener('click', () => {
+        const rndName = NAME_PREFIXES[(Math.random() * NAME_PREFIXES.length) | 0]
+            + NAME_SUFFIXES[(Math.random() * NAME_SUFFIXES.length) | 0]
+            + ' ' + NAME_TITLES[(Math.random() * NAME_TITLES.length) | 0];
+        document.getElementById('hatchNameInput').value = rndName;
+        if (hatchedDragonPending) hatchedDragonPending.name = rndName;
+    });
+
+    // Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.getElementById('detailOverlay').classList.remove('active');
+            if (document.getElementById('hatchContinue').classList.contains('show')) {
+                document.getElementById('hatchOverlay').classList.remove('active');
+                hatching = false;
+            }
+        }
+    });
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    // Init
+    render();
+</script>
+</body>
+</html>
