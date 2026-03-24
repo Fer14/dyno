@@ -816,8 +816,14 @@
         eggEl.style.display = '';
         eggImg.src = '/static/assets/egg1.png';
         spinner.classList.remove('on');
+        // Clear previous dragon image and hide result instantly (no fade-out)
+        resultImg.src = '';
+        result.style.transition = 'none';
         result.classList.remove('show');
         continueBtn.classList.remove('show');
+        // Force reflow so the transition:none takes effect before we restore it
+        result.offsetHeight;
+        result.style.transition = '';
         overlay.classList.add('active');
 
         await sleep(200);

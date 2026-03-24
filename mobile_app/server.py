@@ -13,6 +13,23 @@ from pydantic import BaseModel
 
 MODEL_PATH = "/home/fer/Escritorio/dragons/dragon/app/vae_decoder.onnx"
 LATENT_DIM = 1024
+EXPECTED_NORM = math.sqrt(LATENT_DIM)  # ~32.0
+NORM_STD = 0.71  # empirical std for 1024-dim standard normal
+
+
+def compute_rarity(latent: list[float]) -> tuple[str, float]:
+    """Return (tier, sigma) for a latent vector."""
+    norm = math.sqrt(sum(x * x for x in latent))
+    sigma = abs(norm - EXPECTED_NORM) / NORM_STD
+    if sigma >= 2.5:
+        return "legendary", sigma
+    if sigma >= 2.0:
+        return "epic", sigma
+    if sigma >= 1.5:
+        return "rare", sigma
+    if sigma >= 1.0:
+        return "uncommon", sigma
+    return "common", sigma
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -72,7 +89,45 @@ class BreedRequest(BaseModel):
 def breed(req: BreedRequest):
     """Breed two dragons: average latents + small mutation, return new egg latent."""
     mean = [(a + b) / 2 for a, b in zip(req.latent1, req.latent2)]
+
+    # Rescale the mean vector to preserve the average norm of the parents.
+    # In high dimensions, averaging nearly-orthogonal vectors shrinks the norm
+    # by ~1/sqrt(2), which would make all bred dragons artificially rare.
+    norm1 = math.sqrt(sum(x * x for x in req.latent1))
+    norm2 = math.sqrt(sum(x * x for x in req.latent2))
+    target_norm = (norm1 + norm2) / 2
+    mean_norm = math.sqrt(sum(x * x for x in mean))
+    if mean_norm > 0:
+        scale = target_norm / mean_norm
+        mean = [v * scale for v in mean]
+
     mutated = [v + randn_bm() * 0.15 for v in mean]
+
+    # If both parents share the same rarity tier, force the child to match
+    # by rescaling its norm into the tier's sigma range.
+    tier1, _ = compute_rarity(req.latent1)
+    tier2, _ = compute_rarity(req.latent2)
+    if tier1 == tier2:
+        child_tier, _ = compute_rarity(mutated)
+        if child_tier != tier1:
+            # Sigma ranges per tier (min_sigma, mid_sigma)
+            tier_mid = {
+                "common": 0.5,
+                "uncommon": 1.25,
+                "rare": 1.75,
+                "epic": 2.25,
+                "legendary": 3.0,
+            }
+            # Pick the same side (above/below EXPECTED_NORM) as the parent average
+            mid_sigma = tier_mid[tier1]
+            if target_norm >= EXPECTED_NORM:
+                forced_norm = EXPECTED_NORM + mid_sigma * NORM_STD
+            else:
+                forced_norm = EXPECTED_NORM - mid_sigma * NORM_STD
+            child_norm = math.sqrt(sum(x * x for x in mutated))
+            if child_norm > 0:
+                mutated = [v * (forced_norm / child_norm) for v in mutated]
+
     return {"latent": mutated}
 
 
