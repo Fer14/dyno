@@ -142,6 +142,14 @@ def hatch_latent(req: HatchLatentRequest):
     return {"latent": req.latent, "image": img_b64}
 
 
+@app.post("/api/generate_opponent")
+def generate_opponent():
+    """Generate a random opponent dragon for battles."""
+    latent = [randn_bm() for _ in range(LATENT_DIM)]
+    img_b64 = decode_latent(latent)
+    return {"latent": latent, "image": img_b64}
+
+
 # Serve frontend
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

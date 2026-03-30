@@ -115,6 +115,7 @@
         .empty-state {
             text-align: center; padding: 40px 20px;
             color: rgba(255,255,255,0.2); font-size: 0.9rem;
+            grid-column: 1 / -1;
         }
 
         /* ===== DRAGONS TAB ===== */
@@ -308,7 +309,7 @@
         .rarity-epic        { background: #7c3aed; color: #ede9fe; }
         .rarity-legendary   { background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; }
 
-        .dragon-card .rarity-badge, .breed-card .rarity-badge {
+        .dragon-card .rarity-badge, .breed-card .rarity-badge, .battle-card .rarity-badge {
             position: absolute; top: 4px; left: 4px;
         }
         .detail-name-row {
@@ -367,6 +368,245 @@
             80% { transform: translateX(2px) rotate(0deg); }
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== BATTLE TAB ===== */
+        .battle-picker-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 10px; margin-top: 16px;
+        }
+        .battle-card {
+            border-radius: 12px; overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.12);
+            cursor: pointer; transition: all 0.2s; position: relative;
+            background: rgba(0,0,0,0.3); aspect-ratio: 1;
+        }
+        .battle-card img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+        .battle-card:active { transform: scale(0.95); }
+        .battle-card.selected {
+            border: 3px solid var(--green);
+            box-shadow: 0 0 12px var(--green-glow);
+        }
+        .battle-card .tag {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.75); font-size: 0.6rem;
+            text-align: center; padding: 3px; color: white;
+        }
+        .battle-stats-preview {
+            margin-top: 12px; padding: 12px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 12px; display: none;
+        }
+        .battle-stats-preview.visible { display: block; }
+        .battle-stat-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 4px 0; font-size: 0.8rem;
+        }
+        .battle-stat-label { color: rgba(255,255,255,0.5); }
+        .battle-stat-value { color: #6ee7b7; font-weight: 600; }
+        .battle-start-btn {
+            display: block; width: 100%; padding: 14px; margin-top: 16px;
+            background: var(--green); color: white; border: none;
+            border-radius: 12px; font-family: 'Sono', sans-serif;
+            font-size: 1rem; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; opacity: 0.3; pointer-events: none;
+        }
+        .battle-start-btn.ready { opacity: 1; pointer-events: auto; }
+        .battle-start-btn.ready:active { transform: scale(0.97); }
+
+        /* ===== BATTLE ARENA OVERLAY ===== */
+        .battle-overlay {
+            position: fixed; inset: 0; z-index: 400;
+            background: var(--bg);
+            display: flex; flex-direction: column;
+            opacity: 0; visibility: hidden; transition: all 0.3s;
+            overflow: hidden;
+        }
+        .battle-overlay.active { opacity: 1; visibility: visible; }
+
+        .battle-arena {
+            flex: 1; position: relative; overflow: hidden;
+            background: radial-gradient(ellipse at 50% 80%, rgba(25,155,52,0.08) 0%, transparent 70%);
+        }
+
+        .battle-enemy {
+            position: absolute; top: 8%; right: 5%;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .battle-enemy-img {
+            width: 120px; height: 120px; image-rendering: pixelated;
+            border-radius: 12px;
+            transform: scaleX(-1);
+            transition: filter 0.15s;
+        }
+
+        .battle-player {
+            position: absolute; bottom: 12%; left: 5%;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .battle-player-img {
+            width: 140px; height: 140px; image-rendering: pixelated;
+            border-radius: 12px;
+            transition: filter 0.15s;
+        }
+
+        .battle-hp-wrap { width: 140px; margin-top: 6px; }
+        .battle-hp-name {
+            font-size: 0.65rem; color: rgba(255,255,255,0.6);
+            margin-bottom: 2px; text-align: center;
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+        }
+        .battle-hp-name .rarity-badge { font-size: 0.5rem; padding: 1px 5px; }
+        .battle-hp-bar-outer {
+            width: 100%; height: 10px; border-radius: 5px;
+            background: rgba(255,255,255,0.1);
+            overflow: hidden; border: 1px solid rgba(255,255,255,0.15);
+        }
+        .battle-hp-bar-inner {
+            height: 100%; border-radius: 5px;
+            background: linear-gradient(90deg, #22c55e, #22c55e);
+            transition: width 0.6s ease-out, background 0.3s;
+            width: 100%;
+        }
+        .battle-hp-bar-inner.yellow { background: linear-gradient(90deg, #eab308, #f59e0b); }
+        .battle-hp-bar-inner.red { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        .battle-hp-text {
+            font-size: 0.6rem; color: rgba(255,255,255,0.4);
+            text-align: center; margin-top: 2px;
+        }
+        .battle-enemy .battle-hp-wrap { width: 120px; }
+
+        .battle-log {
+            padding: 12px 16px; padding-bottom: calc(12px + var(--safe-bottom));
+            background: rgba(0,0,0,0.6); border-top: 1px solid var(--border);
+            font-size: 0.85rem; color: #6ee7b7; text-align: center;
+            min-height: 50px; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Stat bars in arena */
+        .battle-stat-bars {
+            position: absolute; bottom: 4%; right: 4%;
+            background: rgba(0,0,0,0.5); border: 1px solid var(--border);
+            border-radius: 10px; padding: 8px 12px; font-size: 0.65rem;
+            min-width: 110px;
+        }
+        .battle-stat-bars.left { right: auto; left: 4%; bottom: auto; top: 4%; }
+        .battle-stat-mini {
+            display: flex; justify-content: space-between; gap: 12px;
+            padding: 2px 0; color: rgba(255,255,255,0.5);
+        }
+        .battle-stat-mini span:last-child { color: #6ee7b7; font-weight: 600; }
+
+        /* Floating damage numbers */
+        .damage-number {
+            position: absolute; font-size: 1.5rem; font-weight: 800;
+            color: #ef4444; text-shadow: 0 2px 8px rgba(239,68,68,0.8), 0 0 4px rgba(0,0,0,0.8);
+            pointer-events: none; z-index: 10;
+            animation: dmgFloat 1s ease-out forwards;
+        }
+        @keyframes dmgFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            60% { opacity: 1; transform: translateY(-40px) scale(1.2); }
+            100% { opacity: 0; transform: translateY(-60px) scale(0.8); }
+        }
+
+        .battle-arena.shake { animation: screenShake 0.3s ease-in-out; }
+        @keyframes screenShake {
+            0%, 100% { transform: translate(0,0); }
+            10% { transform: translate(-4px, 2px); }
+            20% { transform: translate(4px, -2px); }
+            30% { transform: translate(-3px, 3px); }
+            40% { transform: translate(3px, -1px); }
+            50% { transform: translate(-2px, 1px); }
+            60% { transform: translate(2px, -2px); }
+            70% { transform: translate(-1px, 1px); }
+            80% { transform: translate(1px, 0px); }
+        }
+
+        .battle-hit { filter: brightness(0.5) sepia(1) saturate(5) hue-rotate(-20deg) !important; }
+
+        .battle-attacking { animation: atkPulse 0.5s ease-in-out; }
+        @keyframes atkPulse {
+            0% { filter: drop-shadow(0 0 0px transparent); transform: scale(1); }
+            30% { filter: drop-shadow(0 0 15px var(--green-glow)); transform: scale(1.08); }
+            60% { filter: drop-shadow(0 0 8px var(--green-glow)); transform: scale(1.03); }
+            100% { filter: drop-shadow(0 0 0px transparent); transform: scale(1); }
+        }
+        .battle-enemy-img.battle-attacking { animation: atkPulseEnemy 0.5s ease-in-out; }
+        @keyframes atkPulseEnemy {
+            0% { filter: drop-shadow(0 0 0px transparent); transform: scaleX(-1) scale(1); }
+            30% { filter: drop-shadow(0 0 15px rgba(239,68,68,0.6)); transform: scaleX(-1) scale(1.08); }
+            60% { filter: drop-shadow(0 0 8px rgba(239,68,68,0.6)); transform: scaleX(-1) scale(1.03); }
+            100% { filter: drop-shadow(0 0 0px transparent); transform: scaleX(-1) scale(1); }
+        }
+
+        .battle-victory-burst {
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(245,158,11,0.4) 0%, transparent 70%);
+            animation: victoryBurst 1.5s ease-out forwards;
+            pointer-events: none; z-index: 5;
+        }
+        @keyframes victoryBurst {
+            0% { opacity: 0; transform: scale(0.3); }
+            30% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+
+        .battle-defeat-fade { animation: defeatFade 1.5s ease-out forwards; }
+        @keyframes defeatFade {
+            0% { filter: none; opacity: 1; }
+            100% { filter: grayscale(1) brightness(0.4); opacity: 0.6; }
+        }
+
+        .battle-result {
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 20; opacity: 0; visibility: hidden; transition: all 0.5s;
+            background: rgba(0,0,0,0.7);
+        }
+        .battle-result.show { opacity: 1; visibility: visible; }
+        .battle-result-title {
+            font-size: 1.8rem; font-weight: 800; letter-spacing: 3px;
+            margin-bottom: 16px;
+        }
+        .battle-result-title.win { color: #f59e0b; text-shadow: 0 0 20px rgba(245,158,11,0.6); }
+        .battle-result-title.lose { color: #6b7280; }
+        .battle-result-egg {
+            width: 60px; height: auto; margin-top: 12px;
+            object-fit: contain;
+            animation: eggBounce 0.6s ease-out;
+        }
+        @keyframes eggBounce {
+            0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+            60% { transform: scale(1.1) rotate(3deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .battle-result-btn {
+            margin-top: 20px; background: rgba(255,255,255,0.08);
+            border: 1.5px solid rgba(255,255,255,0.25);
+            color: white; padding: 10px 32px; border-radius: 10px;
+            font-family: 'Sono', sans-serif; font-size: 0.9rem; cursor: pointer;
+        }
+        .battle-result-btn:active { background: rgba(255,255,255,0.15); }
+
+        /* VS splash */
+        .battle-vs {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 3rem; font-weight: 800; color: white;
+            text-shadow: 0 0 30px var(--green-glow), 0 0 60px rgba(25,155,52,0.3);
+            letter-spacing: 6px; z-index: 15; pointer-events: none;
+            opacity: 0;
+        }
+        .battle-vs.show {
+            animation: vsFlash 1.2s ease-out forwards;
+        }
+        @keyframes vsFlash {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            40% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        }
     </style>
 </head>
 <body>
@@ -414,6 +654,21 @@
     </div>
 </div>
 
+<!-- Tab: Battle -->
+<div class="tab-page" id="pageBattle">
+    <div class="page-title">Battle Arena</div>
+    <div class="page-subtitle">Choose your champion</div>
+    <div class="battle-stats-preview" id="battleStatsPreview">
+        <div class="battle-stat-row"><span class="battle-stat-label">HP</span><span class="battle-stat-value" id="bpHP">-</span></div>
+        <div class="battle-stat-row"><span class="battle-stat-label">ATK</span><span class="battle-stat-value" id="bpATK">-</span></div>
+        <div class="battle-stat-row"><span class="battle-stat-label">DEF</span><span class="battle-stat-value" id="bpDEF">-</span></div>
+        <div class="battle-stat-row"><span class="battle-stat-label">SPD</span><span class="battle-stat-value" id="bpSPD">-</span></div>
+        <div class="battle-stat-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:6px;"><span class="battle-stat-label">Power</span><span class="battle-stat-value" id="bpPower">-</span></div>
+    </div>
+    <button class="battle-start-btn" id="battleStartBtn">Fight!</button>
+    <div class="battle-picker-grid" id="battlePickerGrid"></div>
+</div>
+
 <!-- Bottom nav -->
 <div class="bottom-nav">
     <button class="nav-item active" data-page="pageEggs">
@@ -433,6 +688,12 @@
             <img src="/static/assets/hearts.png">
         </div>
         <span>Breed</span>
+    </button>
+    <button class="nav-item" data-page="pageBattle">
+        <div class="nav-icon-wrap">
+            <img src="/static/assets/icon.png">
+        </div>
+        <span>Battle</span>
     </button>
 </div>
 
@@ -462,6 +723,41 @@
         </div>
     </div>
     <button class="hatch-continue" id="hatchContinue">Continue</button>
+</div>
+
+<!-- Battle arena overlay -->
+<div class="battle-overlay" id="battleOverlay">
+    <div class="battle-arena" id="battleArena">
+        <div class="battle-vs" id="battleVs">VS</div>
+        <!-- Enemy (top-right, mirrored) -->
+        <div class="battle-enemy" id="battleEnemy">
+            <img class="battle-enemy-img" id="battleEnemyImg" src="">
+            <div class="battle-hp-wrap">
+                <div class="battle-hp-name" id="battleEnemyName">???</div>
+                <div class="battle-hp-bar-outer"><div class="battle-hp-bar-inner" id="battleEnemyHpBar"></div></div>
+                <div class="battle-hp-text" id="battleEnemyHpText">??? / ???</div>
+            </div>
+        </div>
+        <!-- Player (bottom-left) -->
+        <div class="battle-player" id="battlePlayer">
+            <img class="battle-player-img" id="battlePlayerImg" src="">
+            <div class="battle-hp-wrap">
+                <div class="battle-hp-name" id="battlePlayerName">???</div>
+                <div class="battle-hp-bar-outer"><div class="battle-hp-bar-inner" id="battlePlayerHpBar"></div></div>
+                <div class="battle-hp-text" id="battlePlayerHpText">??? / ???</div>
+            </div>
+        </div>
+        <!-- Stat cards -->
+        <div class="battle-stat-bars left" id="battleEnemyStats"></div>
+        <div class="battle-stat-bars" id="battlePlayerStats"></div>
+        <!-- Result -->
+        <div class="battle-result" id="battleResult">
+            <div class="battle-result-title" id="battleResultTitle"></div>
+            <div id="battleResultReward"></div>
+            <button class="battle-result-btn" id="battleResultBtn">Continue</button>
+        </div>
+    </div>
+    <div class="battle-log" id="battleLog">Preparing battle...</div>
 </div>
 
 <script>
@@ -536,6 +832,30 @@
         return '<span class="rarity-badge rarity-' + r.tier + '">' + r.label + '</span>';
     }
 
+    // ===== Battle stats =====
+    const RARITY_STAT_BONUS = { common: 1.0, uncommon: 1.20, rare: 1.45, epic: 1.75, legendary: 2.10 };
+
+    function computeStats(latent) {
+        const chunkSize = 256;
+        const names = ['hp', 'atk', 'def', 'spd'];
+        const raw = {};
+        for (let s = 0; s < 4; s++) {
+            let sumSq = 0;
+            for (let i = s * chunkSize; i < (s + 1) * chunkSize; i++) sumSq += latent[i] * latent[i];
+            raw[names[s]] = Math.max(0, Math.min(1, (sumSq - 200) / 112));
+        }
+        const rarity = computeRarity(latent);
+        const b = RARITY_STAT_BONUS[rarity.tier];
+        return {
+            hp:  Math.round((80 + raw.hp * 120) * b),
+            atk: Math.round((10 + raw.atk * 40) * b),
+            def: Math.round((5 + raw.def * 30) * b),
+            spd: Math.round((10 + raw.spd * 40) * b),
+            get power() { return this.hp + this.atk + this.def + this.spd; },
+            rarity
+        };
+    }
+
     // ===== Tab navigation =====
     document.querySelectorAll('.nav-item').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -544,6 +864,7 @@
             document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
             document.getElementById(btn.dataset.page).classList.add('active');
             if (btn.dataset.page === 'pageBreed') renderBreedTab();
+            if (btn.dataset.page === 'pageBattle') renderBattleTab();
         });
     });
 
@@ -554,6 +875,7 @@
         renderEggsTab();
         renderDragonsTab();
         renderBreedTab();
+        renderBattleTab();
     }
 
     // ===== EGGS TAB =====
@@ -915,10 +1237,275 @@
                 document.getElementById('hatchOverlay').classList.remove('active');
                 hatching = false;
             }
+            // Allow escape from battle only when result is showing
+            if (document.getElementById('battleResult').classList.contains('show')) {
+                document.getElementById('battleResultBtn').click();
+            }
         }
     });
 
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    // ===== BATTLE TAB =====
+    let battleSelected = -1;
+
+    function renderBattleTab() {
+        const grid = document.getElementById('battlePickerGrid');
+        grid.innerHTML = '';
+        if (!dragons.length) {
+            grid.innerHTML = '<div class="empty-state">Hatch some dragons first!</div>';
+            document.getElementById('battleStatsPreview').classList.remove('visible');
+            document.getElementById('battleStartBtn').classList.remove('ready');
+            return;
+        }
+        dragons.forEach((d, i) => {
+            const card = document.createElement('div');
+            card.className = 'battle-card' + (battleSelected === i ? ' selected' : '');
+            const shortName = d.name.split(' ')[0];
+            card.innerHTML = '<img src="data:image/png;base64,' + d.imgSrc + '">'
+                + rarityBadgeHTML(d.latent)
+                + '<div class="tag">' + shortName + '</div>';
+            card.addEventListener('click', () => {
+                battleSelected = (battleSelected === i) ? -1 : i;
+                renderBattleTab();
+            });
+            grid.appendChild(card);
+        });
+
+        const preview = document.getElementById('battleStatsPreview');
+        if (battleSelected >= 0 && dragons[battleSelected]) {
+            const s = computeStats(dragons[battleSelected].latent);
+            document.getElementById('bpHP').textContent = s.hp;
+            document.getElementById('bpATK').textContent = s.atk;
+            document.getElementById('bpDEF').textContent = s.def;
+            document.getElementById('bpSPD').textContent = s.spd;
+            document.getElementById('bpPower').textContent = s.power;
+            preview.classList.add('visible');
+            document.getElementById('battleStartBtn').classList.add('ready');
+        } else {
+            preview.classList.remove('visible');
+            document.getElementById('battleStartBtn').classList.remove('ready');
+        }
+    }
+
+    // ===== BATTLE SYSTEM =====
+    let battling = false;
+    let battleDeadDragon = null;
+
+    function updateHpBar(who, hp, maxHp) {
+        const prefix = who === 'player' ? 'battlePlayer' : 'battleEnemy';
+        const bar = document.getElementById(prefix + 'HpBar');
+        const text = document.getElementById(prefix + 'HpText');
+        const pct = Math.max(0, hp / maxHp * 100);
+        bar.style.width = pct + '%';
+        bar.classList.remove('yellow', 'red');
+        if (pct <= 25) bar.classList.add('red');
+        else if (pct <= 50) bar.classList.add('yellow');
+        text.textContent = hp + ' / ' + maxHp;
+    }
+
+    function spawnDamageNumber(parentId, dmg) {
+        const parent = document.getElementById(parentId);
+        const el = document.createElement('div');
+        el.className = 'damage-number';
+        el.textContent = '-' + dmg;
+        el.style.left = (30 + Math.random() * 60) + 'px';
+        el.style.top = '20px';
+        parent.appendChild(el);
+        setTimeout(() => el.remove(), 1000);
+    }
+
+    function renderStatCard(id, stats) {
+        document.getElementById(id).innerHTML =
+            '<div class="battle-stat-mini"><span>ATK</span><span>' + stats.atk + '</span></div>'
+            + '<div class="battle-stat-mini"><span>DEF</span><span>' + stats.def + '</span></div>'
+            + '<div class="battle-stat-mini"><span>SPD</span><span>' + stats.spd + '</span></div>';
+    }
+
+    document.getElementById('battleStartBtn').addEventListener('click', async () => {
+        if (battleSelected < 0 || !dragons[battleSelected] || battling) return;
+        battling = true;
+
+        const playerDragon = dragons[battleSelected];
+        const pStats = computeStats(playerDragon.latent);
+
+        const overlay = document.getElementById('battleOverlay');
+        const log = document.getElementById('battleLog');
+        document.getElementById('battleResult').classList.remove('show');
+        document.getElementById('battleVs').classList.remove('show');
+        battleDeadDragon = null;
+        log.textContent = 'Searching for opponent...';
+
+        // Reset HP bars
+        document.getElementById('battlePlayerHpBar').style.width = '100%';
+        document.getElementById('battlePlayerHpBar').classList.remove('yellow', 'red');
+        document.getElementById('battleEnemyHpBar').style.width = '100%';
+        document.getElementById('battleEnemyHpBar').classList.remove('yellow', 'red');
+
+        overlay.classList.add('active');
+
+        try {
+            const resp = await fetch('/api/generate_opponent', { method: 'POST' });
+            const oppData = await resp.json();
+
+            const rawOpp = computeStats(oppData.latent);
+            const targetPower = pStats.power * (0.9 + Math.random() * 0.2);
+            const sf = targetPower / rawOpp.power;
+            const oStats = {
+                hp:  Math.round(rawOpp.hp * sf),
+                atk: Math.round(rawOpp.atk * sf),
+                def: Math.round(rawOpp.def * sf),
+                spd: Math.round(rawOpp.spd * sf),
+                get power() { return this.hp + this.atk + this.def + this.spd; }
+            };
+            const oppName = generateName(oppData.latent).split(' ')[0];
+
+            await runBattle(playerDragon, pStats, oppData, oStats, oppName);
+        } catch (err) {
+            console.error(err);
+            log.textContent = 'Failed to find opponent...';
+            await sleep(1500);
+            overlay.classList.remove('active');
+            battling = false;
+        }
+    });
+
+    async function runBattle(playerDragon, pStats, oppData, oStats, oppName) {
+        const arena = document.getElementById('battleArena');
+        const log = document.getElementById('battleLog');
+        const pName = playerDragon.name.split(' ')[0];
+
+        // Set images
+        document.getElementById('battlePlayerImg').src = 'data:image/png;base64,' + playerDragon.imgSrc;
+        document.getElementById('battleEnemyImg').src = 'data:image/png;base64,' + oppData.image;
+        // Reset any leftover defeat styles
+        document.getElementById('battlePlayerImg').classList.remove('battle-defeat-fade');
+        document.getElementById('battleEnemyImg').classList.remove('battle-defeat-fade');
+        document.querySelectorAll('.battle-victory-burst').forEach(el => el.remove());
+
+        // Names
+        document.getElementById('battlePlayerName').innerHTML = pName + ' ' + rarityBadgeHTML(playerDragon.latent);
+        document.getElementById('battleEnemyName').innerHTML = oppName + ' ' + rarityBadgeHTML(oppData.latent);
+
+        // Stat cards
+        renderStatCard('battlePlayerStats', pStats);
+        renderStatCard('battleEnemyStats', oStats);
+
+        // HP
+        let pHp = pStats.hp, oHp = oStats.hp;
+        const pMax = pStats.hp, oMax = oStats.hp;
+        updateHpBar('player', pHp, pMax);
+        updateHpBar('enemy', oHp, oMax);
+
+        // VS splash
+        log.textContent = '';
+        const vs = document.getElementById('battleVs');
+        vs.classList.add('show');
+        await sleep(1200);
+        vs.classList.remove('show');
+
+        log.textContent = 'A wild ' + oppName + ' appeared!';
+        await sleep(1200);
+
+        // Battle loop
+        while (pHp > 0 && oHp > 0) {
+            const playerFirst = pStats.spd >= oStats.spd;
+            const order = playerFirst
+                ? [{ who: 'player', atk: pStats.atk, tDef: oStats.def, name: pName },
+                   { who: 'enemy',  atk: oStats.atk, tDef: pStats.def, name: oppName }]
+                : [{ who: 'enemy',  atk: oStats.atk, tDef: pStats.def, name: oppName },
+                   { who: 'player', atk: pStats.atk, tDef: oStats.def, name: pName }];
+
+            for (const act of order) {
+                if (pHp <= 0 || oHp <= 0) break;
+
+                const defReduction = act.tDef / (act.tDef + 50);
+                const baseDmg = act.atk * (1 - defReduction);
+                const variance = 0.85 + Math.random() * 0.3;
+                const dmg = Math.max(1, Math.round(baseDmg * variance));
+
+                log.textContent = act.name + ' attacks!';
+
+                // Attacker pulse
+                const atkImg = document.getElementById(act.who === 'player' ? 'battlePlayerImg' : 'battleEnemyImg');
+                atkImg.classList.add('battle-attacking');
+                await sleep(500);
+                atkImg.classList.remove('battle-attacking');
+
+                // Apply damage
+                const targetWho = act.who === 'player' ? 'enemy' : 'player';
+                const targetImg = document.getElementById(targetWho === 'player' ? 'battlePlayerImg' : 'battleEnemyImg');
+                const targetParent = targetWho === 'player' ? 'battlePlayer' : 'battleEnemy';
+
+                targetImg.classList.add('battle-hit');
+                spawnDamageNumber(targetParent, dmg);
+                arena.classList.add('shake');
+
+                if (act.who === 'player') {
+                    oHp = Math.max(0, oHp - dmg);
+                    updateHpBar('enemy', oHp, oMax);
+                    log.textContent = pName + ' deals ' + dmg + ' damage!';
+                } else {
+                    pHp = Math.max(0, pHp - dmg);
+                    updateHpBar('player', pHp, pMax);
+                    log.textContent = oppName + ' deals ' + dmg + ' damage!';
+                }
+
+                await sleep(300);
+                targetImg.classList.remove('battle-hit');
+                arena.classList.remove('shake');
+                await sleep(800);
+            }
+        }
+
+        // Battle over
+        const won = pHp > 0;
+        const resultDiv = document.getElementById('battleResult');
+        const resultTitle = document.getElementById('battleResultTitle');
+        const resultReward = document.getElementById('battleResultReward');
+
+        if (won) {
+            log.textContent = oppName + ' has been defeated!';
+            const burst = document.createElement('div');
+            burst.className = 'battle-victory-burst';
+            arena.appendChild(burst);
+            document.getElementById('battleEnemyImg').classList.add('battle-defeat-fade');
+
+            resultTitle.textContent = 'VICTORY!';
+            resultTitle.className = 'battle-result-title win';
+            eggs.push({ type: 'random' });
+            resultReward.innerHTML = '<div style="color:#6ee7b7;font-size:0.85rem;margin-bottom:8px;">You earned a wild egg!</div>'
+                + '<img class="battle-result-egg" src="/static/assets/egg1.png">';
+        } else {
+            log.textContent = pName + ' has fallen...';
+            document.getElementById('battlePlayerImg').classList.add('battle-defeat-fade');
+
+            resultTitle.textContent = 'DEFEAT';
+            resultTitle.className = 'battle-result-title lose';
+            resultReward.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">' + pName + ' has been lost forever...</div>';
+            battleDeadDragon = playerDragon;
+        }
+
+        await sleep(500);
+        resultDiv.classList.add('show');
+    }
+
+    document.getElementById('battleResultBtn').addEventListener('click', () => {
+        // Remove dead dragon from the pool
+        if (battleDeadDragon) {
+            const idx = dragons.indexOf(battleDeadDragon);
+            if (idx >= 0) dragons.splice(idx, 1);
+            battleDeadDragon = null;
+            battleSelected = -1;
+        }
+        document.getElementById('battleOverlay').classList.remove('active');
+        document.querySelectorAll('.battle-victory-burst').forEach(el => el.remove());
+        document.getElementById('battleEnemyImg').classList.remove('battle-defeat-fade');
+        document.getElementById('battlePlayerImg').classList.remove('battle-defeat-fade');
+        document.getElementById('battleResult').classList.remove('show');
+        battling = false;
+        render();
+    });
 
     // Init
     render();
