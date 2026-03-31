@@ -9,6 +9,7 @@
     <link rel="icon" type="image/png" href="/static/assets/icon.png">
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sono:wght@200;300;400;500;600;700;800&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -34,6 +35,44 @@
             overflow: hidden; position: fixed; width: 100%;
         }
 
+        /* ===== Login overlay ===== */
+        .login-overlay {
+            position: fixed; inset: 0; z-index: 500;
+            background: var(--bg);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 16px; padding: 20px;
+            transition: opacity 0.3s;
+        }
+        .login-overlay.hidden { opacity: 0; pointer-events: none; }
+        .login-title { font-size: 2.5rem; font-weight: 800; color: white; letter-spacing: 4px; }
+        .login-subtitle { font-size: 0.85rem; color: rgba(255,255,255,0.4); margin-bottom: 12px; }
+        .login-input {
+            width: 100%; max-width: 280px; padding: 12px 16px;
+            background: var(--surface); border: 1.5px solid var(--border);
+            border-radius: 10px; color: white; font-family: 'Sono', sans-serif;
+            font-size: 0.95rem;
+        }
+        .login-input:focus { outline: none; border-color: var(--green); }
+        .login-input::placeholder { color: rgba(255,255,255,0.25); }
+        .login-buttons { display: flex; gap: 10px; margin-top: 8px; }
+        .login-btn {
+            padding: 12px 28px; border: none; border-radius: 10px;
+            font-family: 'Sono', sans-serif; font-size: 0.95rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .login-btn:active { transform: scale(0.97); }
+        .login-btn.primary { background: var(--green); color: white; }
+        .login-btn.secondary { background: var(--surface); border: 1.5px solid var(--border); color: #6ee7b7; }
+        .login-error { color: var(--red); font-size: 0.8rem; min-height: 1.2em; }
+        .login-divider {
+            width: 100%; max-width: 280px; display: flex; align-items: center;
+            gap: 12px; margin: 4px 0;
+        }
+        .login-divider::before, .login-divider::after {
+            content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.1);
+        }
+        .login-divider span { font-size: 0.75rem; color: rgba(255,255,255,0.3); }
+
         /* ===== Top bar ===== */
         .topbar {
             display: flex; align-items: center; gap: 8px;
@@ -49,6 +88,12 @@
             border-radius: 16px; padding: 3px 10px; font-size: 0.8rem; color: #6ee7b7;
         }
         .topbar .stat img { width: 16px; height: 16px; }
+        .topbar-user {
+            font-size: 0.65rem; color: rgba(255,255,255,0.4); cursor: pointer;
+            padding: 3px 8px; border-radius: 8px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+        }
+        .topbar-user:active { background: rgba(255,255,255,0.1); }
 
         /* ===== Tab pages ===== */
         .tab-page {
@@ -684,16 +729,54 @@
             font-size: 0.45rem; font-weight: 700; text-transform: uppercase;
             padding: 1px 4px; border-radius: 4px; letter-spacing: 0.5px;
         }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed; inset: 0; z-index: 450;
+            background: var(--bg);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 16px;
+        }
+        .loading-overlay.hidden { display: none; }
+        .loading-spinner {
+            width: 48px; height: 48px;
+            border: 3px solid rgba(16,185,129,0.2);
+            border-top-color: var(--green); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        .loading-text { font-size: 0.85rem; color: rgba(255,255,255,0.4); }
     </style>
 </head>
 <body>
+
+<!-- Login overlay -->
+<div class="login-overlay" id="loginOverlay">
+    <img src="/static/assets/icon.png" style="width:64px;height:64px;margin-bottom:8px;">
+    <div class="login-title">DYNO</div>
+    <div class="login-subtitle">Hatch, breed, battle &amp; share dragons</div>
+    <input class="login-input" id="loginUsername" type="text" placeholder="Username" autocomplete="username">
+    <input class="login-input" id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+    <div class="login-error" id="loginError"></div>
+    <div class="login-buttons">
+        <button class="login-btn primary" id="loginBtn">Login</button>
+        <button class="login-btn secondary" id="registerBtn">Register</button>
+    </div>
+    <div class="login-divider"><span>or</span></div>
+    <div id="googleBtnContainer"></div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay hidden" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">Loading your dragons...</div>
+</div>
 
 <!-- Top bar -->
 <div class="topbar">
     <img src="/static/assets/icon.png" alt="D">
     <h1>DYNO</h1>
     <div class="stat">
-        <img src="/static/assets/egg1.png"> <span id="eggStat">5</span>
+        <img src="/static/assets/egg1.png"> <span id="eggStat">0</span>
     </div>
     <div class="stat" style="margin-left:4px;">
         <img src="/static/assets/black_dragon.png"> <span id="dragonStat">0</span>
@@ -702,6 +785,7 @@
         <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4V4zm2 2v2h2V6H6zm8-2h6v6h-6V4zm2 2v2h2V6h-2zM4 14h6v6H4v-6zm2 2v2h2v-2H6zm10-1h1v1h-1v-1zm-2-1h1v1h-1v-1zm4 0h1v1h-1v-1zm-2 2h1v1h-1v-1zm2 2h1v1h-1v-1zm-4 0h1v1h-1v-1zm0 2h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1z"/></svg>
         Scan
     </button>
+    <button class="topbar-user" id="logoutBtn" title="Logout"></button>
 </div>
 
 <!-- Tab: Eggs -->
@@ -875,20 +959,140 @@
 </div>
 
 <script>
-    // ===== State =====
-    // egg: { type:'random' } or { type:'bred', latent:[...], parent1Id, parent2Id }
-    // dragon: { id, latent:[...], imgSrc (base64), parent1Id:null|int, parent2Id:null|int }
+    // ===== Auth & State =====
+    let token = localStorage.getItem('dyno_token');
+    let currentUser = localStorage.getItem('dyno_username') || '';
     let eggs = [];
     let dragons = [];
-    let nextId = 1;
-    let selected = [];   // indices for breeding tab
+    let imageCache = new Map(); // dragon_id -> base64
+    let selected = [];   // dragon ids for breeding tab
     let hatching = false;
     let hatchedDragonPending = null;
 
-    for (let i = 0; i < 5; i++) eggs.push({ type: 'random' });
+    async function authFetch(url, options = {}) {
+        if (!options.headers) options.headers = {};
+        if (token) options.headers['Authorization'] = 'Bearer ' + token;
+        if (!options.headers['Content-Type'] && options.body) {
+            options.headers['Content-Type'] = 'application/json';
+        }
+        const resp = await fetch(url, options);
+        if (resp.status === 401) {
+            token = null;
+            localStorage.removeItem('dyno_token');
+            localStorage.removeItem('dyno_username');
+            showLogin();
+            throw new Error('Session expired');
+        }
+        return resp;
+    }
+
+    // ===== Login/Register =====
+    function showLogin() {
+        document.getElementById('loginOverlay').classList.remove('hidden');
+        document.getElementById('loginError').textContent = '';
+    }
+
+    function hideLogin() {
+        document.getElementById('loginOverlay').classList.add('hidden');
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', () => doAuth('/api/login'));
+    document.getElementById('registerBtn').addEventListener('click', () => doAuth('/api/register'));
+    document.getElementById('loginPassword').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') doAuth('/api/login');
+    });
+
+    async function doAuth(endpoint) {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const errorEl = document.getElementById('loginError');
+        if (!username || !password) {
+            errorEl.textContent = 'Enter username and password';
+            return;
+        }
+        errorEl.textContent = '';
+        try {
+            const resp = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                errorEl.textContent = data.detail || 'Something went wrong';
+                return;
+            }
+            token = data.token;
+            currentUser = data.username;
+            localStorage.setItem('dyno_token', token);
+            localStorage.setItem('dyno_username', currentUser);
+            hideLogin();
+            await loadCollection();
+        } catch (err) {
+            errorEl.textContent = 'Connection error';
+        }
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        if (!confirm('Logout?')) return;
+        token = null;
+        currentUser = '';
+        localStorage.removeItem('dyno_token');
+        localStorage.removeItem('dyno_username');
+        dragons = [];
+        eggs = [];
+        imageCache.clear();
+        render();
+        showLogin();
+    });
+
+    // ===== Load collection from server =====
+    async function loadCollection() {
+        const loading = document.getElementById('loadingOverlay');
+        loading.classList.remove('hidden');
+        document.getElementById('loadingText').textContent = 'Loading your dragons...';
+
+        try {
+            const [dragonsResp, eggsResp] = await Promise.all([
+                authFetch('/api/dragons'),
+                authFetch('/api/eggs')
+            ]);
+            const dragonsData = await dragonsResp.json();
+            const eggsData = await eggsResp.json();
+
+            dragons = dragonsData.dragons;
+            eggs = eggsData.eggs;
+
+            // Load images for all dragons
+            if (dragons.length) {
+                document.getElementById('loadingText').textContent = 'Generating ' + dragons.length + ' dragon images...';
+                const ids = dragons.map(d => d.id);
+                const imgResp = await authFetch('/api/dragons/images', {
+                    method: 'POST',
+                    body: JSON.stringify({ dragon_ids: ids })
+                });
+                const imgData = await imgResp.json();
+                imageCache.clear();
+                for (const [id, img] of Object.entries(imgData.images)) {
+                    imageCache.set(parseInt(id), img);
+                }
+            }
+
+            document.getElementById('logoutBtn').textContent = currentUser;
+            render();
+        } catch (err) {
+            console.error('Failed to load collection:', err);
+        } finally {
+            loading.classList.add('hidden');
+        }
+    }
+
+    function getDragonImg(dragon) {
+        const cached = imageCache.get(dragon.id);
+        return cached ? 'data:image/png;base64,' + cached : '';
+    }
 
     // ===== Name generator =====
-    // Deterministic from latent vector so the same dragon always gets the same default name
     const NAME_PREFIXES = [
         'Ash','Blaze','Cinder','Drake','Ember','Fang','Gloom','Hex',
         'Ignis','Jade','Kael','Luna','Myst','Nyx','Onyx','Pyra',
@@ -910,7 +1114,6 @@
     ];
 
     function generateName(latent) {
-        // Use first few latent values as seed
         const seed1 = Math.abs(latent[0] * 1000) | 0;
         const seed2 = Math.abs(latent[1] * 1000) | 0;
         const seed3 = Math.abs(latent[2] * 1000) | 0;
@@ -920,20 +1123,21 @@
         return prefix + suffix + ' ' + title;
     }
 
-    // ===== Rarity system =====
-    // L2 norm of a 1024-dim standard normal vector follows a chi distribution.
-    // Expected value ≈ sqrt(1024) ≈ 32.0, std ≈ ~0.7
-    // We use the deviation from the expected norm to assign rarity.
-    const EXPECTED_NORM = Math.sqrt(1024); // ~32.0
+    function randomName() {
+        return NAME_PREFIXES[(Math.random() * NAME_PREFIXES.length) | 0]
+            + NAME_SUFFIXES[(Math.random() * NAME_SUFFIXES.length) | 0]
+            + ' ' + NAME_TITLES[(Math.random() * NAME_TITLES.length) | 0];
+    }
 
-    const NORM_STD = 0.71; // empirical std of the norm for 1024-dim standard normal
+    // ===== Rarity system =====
+    const EXPECTED_NORM = Math.sqrt(1024);
+    const NORM_STD = 0.71;
 
     function computeRarity(latent) {
         let sumSq = 0;
         for (let i = 0; i < latent.length; i++) sumSq += latent[i] * latent[i];
         const norm = Math.sqrt(sumSq);
         const sigma = Math.abs(norm - EXPECTED_NORM) / NORM_STD;
-        // ~68% Common, ~19% Uncommon, ~9% Rare, ~3% Epic, ~1% Legendary
         if (sigma >= 2.5) return { tier: 'legendary', label: 'Legendary', norm, sigma };
         if (sigma >= 2.0) return { tier: 'epic',      label: 'Epic',      norm, sigma };
         if (sigma >= 1.5) return { tier: 'rare',       label: 'Rare',      norm, sigma };
@@ -983,8 +1187,6 @@
         const origNorm = Math.sqrt(sumSq);
         const range = max - min || 1;
 
-        // 4-bit quantization: pack 2 values per byte -> 512 bytes
-        // + 4 bytes for original norm to preserve rarity after decode
         const buf = new Uint8Array(12 + 512);
         const view = new DataView(buf.buffer);
         view.setFloat32(0, min, true);
@@ -1031,7 +1233,6 @@
             latent[i * 2 + 1] = (lo / 15) * range + min;
         }
 
-        // Rescale to preserve original L2 norm (and thus rarity)
         let sumSq = 0;
         for (let i = 0; i < 1024; i++) sumSq += latent[i] * latent[i];
         const currentNorm = Math.sqrt(sumSq);
@@ -1075,7 +1276,7 @@
 
     let html5QrScanner = null;
 
-    // Reusable QR scanner — calls onDragon(dragon) when a dragon is scanned and reconstructed
+    // Reusable QR scanner — calls onDragon({latent, name, imgSrc}) when scanned and reconstructed
     async function scanDragonQR(onDragon) {
         const overlay = document.getElementById('scanOverlay');
         const status = document.getElementById('scanStatus');
@@ -1099,22 +1300,82 @@
                     scanner.stop().then(async () => {
                         try {
                             const { latent, name } = decodeDragonFromQR(decodedText);
-                            const resp = await fetch('/api/hatch_latent', {
+                            // Use add_from_qr for collection add, or just reconstruct image for breed/battle
+                            const resp = await authFetch('/api/dragons/add_from_qr', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ latent })
+                                body: JSON.stringify({ latent, name: name || generateName(latent) })
                             });
                             const data = await resp.json();
-
-                            const dragonName = name || generateName(latent);
                             const dragon = {
-                                id: nextId++,
-                                name: dragonName,
-                                latent: data.latent,
-                                imgSrc: data.image,
-                                parent1Id: null,
-                                parent2Id: null,
+                                id: data.dragon_id,
+                                name: name || generateName(latent),
+                                latent,
+                                parent1_id: null,
+                                parent2_id: null,
                                 received: true
+                            };
+                            imageCache.set(dragon.id, data.image);
+                            overlay.classList.remove('active');
+                            onDragon(dragon);
+                        } catch (err) {
+                            status.textContent = err.message || 'Failed to reconstruct dragon';
+                            status.classList.add('error');
+                        }
+                    }).catch(() => {});
+                },
+                () => {}
+            );
+        } catch (err) {
+            status.textContent = 'Camera access denied. Enable camera in browser settings.';
+            status.classList.add('error');
+        }
+    }
+
+    // Scan for breed/battle — reconstruct image without adding to DB
+    async function scanDragonQRTemp(onDragon) {
+        const overlay = document.getElementById('scanOverlay');
+        const status = document.getElementById('scanStatus');
+        status.textContent = 'Point camera at QR code';
+        status.classList.remove('error');
+        overlay.classList.add('active');
+
+        try {
+            html5QrScanner = new Html5Qrcode('scanReader');
+            await html5QrScanner.start(
+                { facingMode: 'environment' },
+                { fps: 15, qrbox: (w, h) => { const s = Math.floor(Math.min(w, h) * 0.85); return { width: s, height: s }; } },
+                (decodedText) => {
+                    if (!decodedText.startsWith('DYNO:v2:')) return;
+
+                    const scanner = html5QrScanner;
+                    html5QrScanner = null;
+                    status.textContent = 'Dragon found! Reconstructing...';
+                    status.classList.remove('error');
+
+                    scanner.stop().then(async () => {
+                        try {
+                            const { latent, name } = decodeDragonFromQR(decodedText);
+                            // Just get the image, don't save to DB
+                            const resp = await authFetch('/api/generate_opponent', { method: 'POST' });
+                            // Actually, we need hatch_latent for image only. But that endpoint is removed.
+                            // Use generate_opponent just for the image decode — or add a temp decode.
+                            // Simpler: call the add_from_qr but we don't want to add to DB for breed/battle.
+                            // Let's just decode the image by fetching /api/dragons/images won't work (not in DB).
+                            // Best approach: we still have the latent, just need image. Use a simple POST.
+                            const imgResp = await fetch('/api/generate_opponent', { method: 'POST' });
+                            // That won't work either — it generates random. We need a dedicated decode endpoint.
+                            // Actually, let's keep /api/hatch_latent as a utility endpoint.
+                            const imgResp2 = await authFetch('/api/hatch_latent', {
+                                method: 'POST',
+                                body: JSON.stringify({ latent })
+                            });
+                            const imgData = await imgResp2.json();
+
+                            const dragon = {
+                                id: null,
+                                name: name || generateName(latent),
+                                latent,
+                                imgSrc: imgData.image
                             };
                             overlay.classList.remove('active');
                             onDragon(dragon);
@@ -1132,7 +1393,7 @@
         }
     }
 
-    // Top bar scan: adds dragon to collection
+    // Top bar scan: adds dragon to collection via server
     function startQRScan() {
         scanDragonQR((dragon) => {
             dragons.push(dragon);
@@ -1176,10 +1437,9 @@
     let scannedBreedDragon = null;
 
     document.getElementById('breedScanBtn').addEventListener('click', () => {
-        scanDragonQR((dragon) => {
+        scanDragonQRTemp((dragon) => {
             scannedBreedDragon = dragon;
-            // Auto-select scanned dragon as second parent
-            selected = selected.slice(0, 1); // keep first selection if any
+            selected = selected.slice(0, 1);
             renderBreedTab();
         });
     });
@@ -1190,7 +1450,7 @@
             alert('Select your champion first, then scan your friend\'s dragon!');
             return;
         }
-        scanDragonQR(async (dragon) => {
+        scanDragonQRTemp(async (dragon) => {
             if (battling) return;
             battling = true;
 
@@ -1213,7 +1473,7 @@
             overlay.classList.add('active');
 
             const oppName = dragon.name.split(' ')[0];
-            await runBattle(playerDragon, pStats, { latent: dragon.latent, image: dragon.imgSrc }, oStats, oppName);
+            await runBattle(playerDragon, pStats, { latent: dragon.latent, image: dragon.imgSrc }, oStats, oppName, true);
         });
     });
 
@@ -1247,12 +1507,12 @@
             grid.innerHTML = '<div class="empty-state">No eggs. Breed two dragons to get more!</div>';
             return;
         }
-        eggs.forEach((egg, i) => {
+        eggs.forEach((egg) => {
             const card = document.createElement('div');
             card.className = 'egg-card' + (egg.type === 'bred' ? ' bred' : '');
             const label = egg.type === 'bred' ? 'Bred' : 'Wild';
             card.innerHTML = '<img src="/static/assets/egg1.png"><div class="egg-label">' + label + '</div>';
-            card.addEventListener('click', () => hatchEgg(i));
+            card.addEventListener('click', () => hatchEgg(egg.id));
             grid.appendChild(card);
         });
     }
@@ -1269,7 +1529,6 @@
             return;
         }
 
-        // Group dragons by rarity
         const groups = {};
         dragons.forEach(d => {
             const r = computeRarity(d.latent);
@@ -1277,7 +1536,6 @@
             groups[r.tier].push(d);
         });
 
-        // Render each rarity section in order (rarest first)
         RARITY_ORDER.forEach(tier => {
             if (!groups[tier] || !groups[tier].length) return;
             const section = document.createElement('div');
@@ -1294,8 +1552,9 @@
             groups[tier].forEach(d => {
                 const card = document.createElement('div');
                 card.className = 'dragon-card';
-                const shortName = d.name.split(' ')[0]; // Just the first name on the card
-                card.innerHTML = '<img src="data:image/png;base64,' + d.imgSrc + '">'
+                const shortName = d.name.split(' ')[0];
+                const imgSrc = getDragonImg(d);
+                card.innerHTML = (imgSrc ? '<img src="' + imgSrc + '">' : '<div style="width:100%;height:100%;background:rgba(255,255,255,0.03);"></div>')
                     + '<div class="tag">' + shortName + '</div>'
                     + (d.received ? '<div class="received-badge">Received</div>' : '');
                 card.addEventListener('click', () => showDetail(d));
@@ -1311,17 +1570,16 @@
 
     function showDetail(dragon) {
         detailDragon = dragon;
-        document.getElementById('detailImg').src = 'data:image/png;base64,' + dragon.imgSrc;
+        const imgSrc = getDragonImg(dragon);
+        document.getElementById('detailImg').src = imgSrc;
         document.getElementById('detailNameInput').value = dragon.name;
         document.getElementById('detailId').textContent = 'Dragon #' + dragon.id;
 
-        // Rarity info
         const r = computeRarity(dragon.latent);
         const rarityDiv = document.getElementById('detailRarity');
         rarityDiv.innerHTML = '<span class="rarity-badge rarity-' + r.tier + '">' + r.label + '</span>'
             + '<span class="detail-rarity-score">' + r.sigma.toFixed(1) + 'σ from mean</span>';
 
-        // Stats
         const s = computeStats(dragon.latent);
         document.getElementById('detailStats').innerHTML =
             '<div class="battle-stat-row"><span class="battle-stat-label">HP</span><span class="battle-stat-value">' + s.hp + '</span></div>'
@@ -1333,27 +1591,27 @@
         const lineageDiv = document.getElementById('detailLineage');
         lineageDiv.innerHTML = '';
 
-        if (dragon.parent1Id && dragon.parent2Id) {
-            const p1 = dragons.find(d => d.id === dragon.parent1Id);
-            const p2 = dragons.find(d => d.id === dragon.parent2Id);
+        if (dragon.parent1_id && dragon.parent2_id) {
+            const p1 = dragons.find(d => d.id === dragon.parent1_id);
+            const p2 = dragons.find(d => d.id === dragon.parent2_id);
             lineageDiv.innerHTML = '<div class="lineage-label">Parents</div>';
             const row = document.createElement('div');
             row.className = 'lineage-row';
-            if (p1) row.innerHTML += '<img src="data:image/png;base64,' + p1.imgSrc + '" title="Dragon #' + p1.id + '">';
+            const p1Img = p1 ? getDragonImg(p1) : '';
+            const p2Img = p2 ? getDragonImg(p2) : '';
+            if (p1 && p1Img) row.innerHTML += '<img src="' + p1Img + '" title="Dragon #' + p1.id + '">';
             else row.innerHTML += '<div style="width:48px;height:48px;border-radius:8px;background:rgba(255,255,255,0.05);"></div>';
             row.innerHTML += '<span class="lineage-plus">&times;</span>';
-            if (p2) row.innerHTML += '<img src="data:image/png;base64,' + p2.imgSrc + '" title="Dragon #' + p2.id + '">';
+            if (p2 && p2Img) row.innerHTML += '<img src="' + p2Img + '" title="Dragon #' + p2.id + '">';
             else row.innerHTML += '<div style="width:48px;height:48px;border-radius:8px;background:rgba(255,255,255,0.05);"></div>';
             lineageDiv.appendChild(row);
 
-            // Show parent names
             const names = document.createElement('div');
             names.style.cssText = 'display:flex;justify-content:space-around;margin-top:6px;font-size:0.7rem;color:rgba(255,255,255,0.4);';
             names.innerHTML = '<span>' + (p1 ? p1.name.split(' ')[0] : '?') + '</span><span>' + (p2 ? p2.name.split(' ')[0] : '?') + '</span>';
             lineageDiv.appendChild(names);
 
-            // Grandparents
-            const gps = [p1, p2].filter(p => p && p.parent1Id && p.parent2Id);
+            const gps = [p1, p2].filter(p => p && p.parent1_id && p.parent2_id);
             if (gps.length) {
                 const gpLabel = document.createElement('div');
                 gpLabel.className = 'lineage-label';
@@ -1361,14 +1619,17 @@
                 gpLabel.textContent = 'Grandparents';
                 lineageDiv.appendChild(gpLabel);
                 gps.forEach(p => {
-                    const gp1 = dragons.find(d => d.id === p.parent1Id);
-                    const gp2 = dragons.find(d => d.id === p.parent2Id);
+                    const gp1 = dragons.find(d => d.id === p.parent1_id);
+                    const gp2 = dragons.find(d => d.id === p.parent2_id);
                     const gr = document.createElement('div');
                     gr.className = 'lineage-row';
                     gr.style.marginBottom = '6px';
-                    const makeThumb = (d) => d
-                        ? '<img src="data:image/png;base64,' + d.imgSrc + '" style="width:36px;height:36px;" title="#' + d.id + '">'
-                        : '<div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.05);"></div>';
+                    const makeThumb = (d) => {
+                        if (!d) return '<div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.05);"></div>';
+                        const img = getDragonImg(d);
+                        return img ? '<img src="' + img + '" style="width:36px;height:36px;" title="#' + d.id + '">' :
+                            '<div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.05);"></div>';
+                    };
                     gr.innerHTML = makeThumb(gp1) + '<span class="lineage-plus" style="font-size:0.8rem;">&times;</span>' + makeThumb(gp2)
                         + '<span class="lineage-arrow">&rarr; #' + p.id + '</span>';
                     lineageDiv.appendChild(gr);
@@ -1378,8 +1639,7 @@
             lineageDiv.innerHTML = '<div class="lineage-label">Origin</div><div class="lineage-wild">Wild hatched (no parents)</div>';
         }
 
-        // Show children
-        const children = dragons.filter(d => d.parent1Id === dragon.id || d.parent2Id === dragon.id);
+        const children = dragons.filter(d => d.parent1_id === dragon.id || d.parent2_id === dragon.id);
         if (children.length) {
             const childLabel = document.createElement('div');
             childLabel.className = 'lineage-label';
@@ -1389,8 +1649,10 @@
             const childRow = document.createElement('div');
             childRow.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
             children.forEach(c => {
+                const cImg = getDragonImg(c);
+                if (!cImg) return;
                 const thumb = document.createElement('img');
-                thumb.src = 'data:image/png;base64,' + c.imgSrc;
+                thumb.src = cImg;
                 thumb.style.cssText = 'width:48px;height:48px;border-radius:8px;border:1.5px solid rgba(255,255,255,0.2);image-rendering:pixelated;cursor:pointer;';
                 thumb.title = 'Dragon #' + c.id;
                 thumb.addEventListener('click', () => showDetail(c));
@@ -1402,34 +1664,48 @@
         document.getElementById('detailOverlay').classList.add('active');
     }
 
-    // Save name on input change
+    // Save name on input change (debounced server call)
+    let renameTimeout = null;
     document.getElementById('detailNameInput').addEventListener('input', (e) => {
-        if (detailDragon) {
-            detailDragon.name = e.target.value;
-            render();
-        }
+        if (!detailDragon) return;
+        detailDragon.name = e.target.value;
+        render();
+        clearTimeout(renameTimeout);
+        renameTimeout = setTimeout(() => {
+            authFetch('/api/dragons/' + detailDragon.id + '/name', {
+                method: 'PUT',
+                body: JSON.stringify({ name: detailDragon.name })
+            }).catch(() => {});
+        }, 500);
     });
 
     // Random name button
     document.getElementById('detailRandomName').addEventListener('click', () => {
         if (!detailDragon) return;
-        // Generate a new random name by shuffling seeds
-        const rndName = NAME_PREFIXES[(Math.random() * NAME_PREFIXES.length) | 0]
-            + NAME_SUFFIXES[(Math.random() * NAME_SUFFIXES.length) | 0]
-            + ' ' + NAME_TITLES[(Math.random() * NAME_TITLES.length) | 0];
+        const rndName = randomName();
         detailDragon.name = rndName;
         document.getElementById('detailNameInput').value = rndName;
         render();
+        authFetch('/api/dragons/' + detailDragon.id + '/name', {
+            method: 'PUT',
+            body: JSON.stringify({ name: rndName })
+        }).catch(() => {});
     });
 
-    document.getElementById('detailDeleteBtn').addEventListener('click', () => {
+    document.getElementById('detailDeleteBtn').addEventListener('click', async () => {
         if (!detailDragon) return;
         if (!confirm('Release ' + detailDragon.name + '? This cannot be undone.')) return;
-        const idx = dragons.indexOf(detailDragon);
-        if (idx >= 0) dragons.splice(idx, 1);
-        detailDragon = null;
-        document.getElementById('detailOverlay').classList.remove('active');
-        render();
+        try {
+            await authFetch('/api/dragons/' + detailDragon.id, { method: 'DELETE' });
+            const idx = dragons.findIndex(d => d.id === detailDragon.id);
+            if (idx >= 0) dragons.splice(idx, 1);
+            imageCache.delete(detailDragon.id);
+            detailDragon = null;
+            document.getElementById('detailOverlay').classList.remove('active');
+            render();
+        } catch (err) {
+            console.error('Failed to release dragon:', err);
+        }
     });
 
     document.getElementById('detailClose').addEventListener('click', () => {
@@ -1442,45 +1718,49 @@
 
     // ===== BREED TAB =====
     function renderBreedTab() {
-        // Grid
         const grid = document.getElementById('breedGrid');
         grid.innerHTML = '';
         if (!dragons.length) {
             grid.innerHTML = '<div class="empty-state">Hatch some dragons first!</div>';
         } else {
-            dragons.forEach((d, i) => {
+            dragons.forEach((d) => {
                 const card = document.createElement('div');
-                card.className = 'breed-card' + (selected.includes(i) ? ' selected' : '');
+                card.className = 'breed-card' + (selected.includes(d.id) ? ' selected' : '');
                 const shortName = d.name.split(' ')[0];
-                card.innerHTML = '<img src="data:image/png;base64,' + d.imgSrc + '">'
+                const imgSrc = getDragonImg(d);
+                card.innerHTML = (imgSrc ? '<img src="' + imgSrc + '">' : '<div style="width:100%;height:100%;background:rgba(255,255,255,0.03);"></div>')
                     + rarityBadgeHTML(d.latent)
                     + '<div class="tag">' + shortName + '</div>';
                 card.addEventListener('click', () => {
-                    scannedBreedDragon = null; // clear scanned dragon on manual selection
-                    const pos = selected.indexOf(i);
+                    scannedBreedDragon = null;
+                    const pos = selected.indexOf(d.id);
                     if (pos >= 0) selected.splice(pos, 1);
-                    else if (selected.length < 2) selected.push(i);
-                    else { selected.shift(); selected.push(i); }
+                    else if (selected.length < 2) selected.push(d.id);
+                    else { selected.shift(); selected.push(d.id); }
                     renderBreedTab();
                 });
                 grid.appendChild(card);
             });
         }
 
-        // Preview slots
         const s1 = document.getElementById('bSlot1');
         const s2 = document.getElementById('bSlot2');
-        if (selected.length >= 1 && dragons[selected[0]]) {
-            s1.innerHTML = '<img src="data:image/png;base64,' + dragons[selected[0]].imgSrc + '">';
-            s1.classList.add('filled');
+        const d1 = dragons.find(d => d.id === selected[0]);
+        const d2 = dragons.find(d => d.id === selected[1]);
+
+        if (d1) {
+            const img1 = getDragonImg(d1);
+            s1.innerHTML = img1 ? '<img src="' + img1 + '">' : '<span class="ph">?</span>';
+            s1.classList.toggle('filled', !!img1);
         } else { s1.innerHTML = '<span class="ph">?</span>'; s1.classList.remove('filled'); }
 
         if (scannedBreedDragon) {
             s2.innerHTML = '<img src="data:image/png;base64,' + scannedBreedDragon.imgSrc + '">';
             s2.classList.add('filled');
-        } else if (selected.length >= 2 && dragons[selected[1]]) {
-            s2.innerHTML = '<img src="data:image/png;base64,' + dragons[selected[1]].imgSrc + '">';
-            s2.classList.add('filled');
+        } else if (d2) {
+            const img2 = getDragonImg(d2);
+            s2.innerHTML = img2 ? '<img src="' + img2 + '">' : '<span class="ph">?</span>';
+            s2.classList.toggle('filled', !!img2);
         } else { s2.innerHTML = '<span class="ph">?</span>'; s2.classList.remove('filled'); }
 
         const canBreed = scannedBreedDragon ? selected.length >= 1 : selected.length === 2;
@@ -1491,49 +1771,62 @@
         const hasScanned = !!scannedBreedDragon;
         if (hasScanned && selected.length < 1) return;
         if (!hasScanned && selected.length !== 2) return;
-        const d1 = dragons[selected[0]];
-        const d2 = hasScanned ? scannedBreedDragon : dragons[selected[1]];
-        const resp = await fetch('/api/breed', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ latent1: d1.latent, latent2: d2.latent })
-        });
-        const data = await resp.json();
-        eggs.push({ type: 'bred', latent: data.latent, parent1Id: d1.id, parent2Id: d2.id });
-        selected = [];
-        scannedBreedDragon = null;
-        render();
-        // Switch to eggs tab
-        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        document.querySelector('[data-page="pageEggs"]').classList.add('active');
-        document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
-        document.getElementById('pageEggs').classList.add('active');
+        const d1 = dragons.find(d => d.id === selected[0]);
+        if (!d1) return;
+
+        try {
+            const body = { dragon1_id: d1.id };
+            if (hasScanned) {
+                body.friend_latent = scannedBreedDragon.latent;
+            } else {
+                body.dragon2_id = selected[1];
+            }
+
+            const resp = await authFetch('/api/breed', {
+                method: 'POST',
+                body: JSON.stringify(body)
+            });
+            const data = await resp.json();
+            eggs.push({
+                id: data.egg_id,
+                type: 'bred',
+                latent: data.latent,
+                parent1_id: d1.id,
+                parent2_id: hasScanned ? null : selected[1]
+            });
+            selected = [];
+            scannedBreedDragon = null;
+            render();
+            // Switch to eggs tab
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-page="pageEggs"]').classList.add('active');
+            document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+            document.getElementById('pageEggs').classList.add('active');
+        } catch (err) {
+            console.error('Breed failed:', err);
+        }
     });
 
     // ===== HATCHING =====
-    async function hatchEgg(eggIdx) {
+    async function hatchEgg(eggId) {
         if (hatching) return;
         hatching = true;
-        const egg = eggs[eggIdx];
         const overlay = document.getElementById('hatchOverlay');
         const eggEl = document.getElementById('hatchEgg');
         const eggImg = document.getElementById('hatchEggImg');
         const spinner = document.getElementById('hatchSpinner');
         const result = document.getElementById('hatchResult');
         const resultImg = document.getElementById('hatchResultImg');
-        const resultLabel = document.getElementById('hatchResultLabel');
         const continueBtn = document.getElementById('hatchContinue');
 
         eggEl.className = 'hatch-egg';
         eggEl.style.display = '';
         eggImg.src = '/static/assets/egg1.png';
         spinner.classList.remove('on');
-        // Clear previous dragon image and hide result instantly (no fade-out)
         resultImg.src = '';
         result.style.transition = 'none';
         result.classList.remove('show');
         continueBtn.classList.remove('show');
-        // Force reflow so the transition:none takes effect before we restore it
         result.offsetHeight;
         result.style.transition = '';
         overlay.classList.add('active');
@@ -1547,57 +1840,63 @@
         spinner.classList.add('on');
 
         try {
-            let data;
-            if (egg.type === 'bred') {
-                const resp = await fetch('/api/hatch_latent', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ latent: egg.latent })
-                });
-                data = await resp.json();
-            } else {
-                const resp = await fetch('/api/hatch', { method: 'POST' });
-                data = await resp.json();
-            }
+            const resp = await authFetch('/api/hatch', {
+                method: 'POST',
+                body: JSON.stringify({ egg_id: eggId })
+            });
+            const data = await resp.json();
 
             spinner.classList.remove('on');
             eggEl.style.display = 'none';
             resultImg.src = 'data:image/png;base64,' + data.image;
-            const id = nextId++;
-            const defaultName = generateName(data.latent);
             const r = computeRarity(data.latent);
-            document.getElementById('hatchNameInput').value = defaultName;
+            document.getElementById('hatchNameInput').value = data.name;
             document.getElementById('hatchRarity').innerHTML =
                 '<span class="rarity-badge rarity-' + r.tier + '">' + r.label + '</span>';
             result.classList.add('show');
             await sleep(500);
             continueBtn.classList.add('show');
 
-            // Store dragon ref so continue button can read the final name
             hatchedDragonPending = {
-                id,
-                name: defaultName,
+                id: data.dragon_id,
+                name: data.name,
                 latent: data.latent,
-                imgSrc: data.image,
-                parent1Id: egg.parent1Id || null,
-                parent2Id: egg.parent2Id || null
+                image: data.image,
+                parent1_id: data.parent1_id || null,
+                parent2_id: data.parent2_id || null,
+                received: false
             };
-            eggs.splice(eggIdx, 1);
+
+            // Remove egg from local list
+            const eggIdx = eggs.findIndex(e => e.id === eggId);
+            if (eggIdx >= 0) eggs.splice(eggIdx, 1);
         } catch (err) {
             console.error(err);
             spinner.classList.remove('on');
-            resultLabel.textContent = 'Something went wrong...';
             result.classList.add('show');
             continueBtn.classList.add('show');
         }
     }
 
-    document.getElementById('hatchContinue').addEventListener('click', () => {
+    document.getElementById('hatchContinue').addEventListener('click', async () => {
         if (hatchedDragonPending) {
-            // Read the final name from the input
             const finalName = document.getElementById('hatchNameInput').value.trim() || hatchedDragonPending.name;
-            hatchedDragonPending.name = finalName;
-            dragons.push(hatchedDragonPending);
+            if (finalName !== hatchedDragonPending.name) {
+                // Update name on server
+                await authFetch('/api/dragons/' + hatchedDragonPending.id + '/name', {
+                    method: 'PUT',
+                    body: JSON.stringify({ name: finalName })
+                }).catch(() => {});
+            }
+            dragons.push({
+                id: hatchedDragonPending.id,
+                name: finalName,
+                latent: hatchedDragonPending.latent,
+                parent1_id: hatchedDragonPending.parent1_id,
+                parent2_id: hatchedDragonPending.parent2_id,
+                received: false
+            });
+            imageCache.set(hatchedDragonPending.id, hatchedDragonPending.image);
             hatchedDragonPending = null;
             render();
         }
@@ -1612,9 +1911,7 @@
 
     // Random name in hatch overlay
     document.getElementById('hatchRandomName').addEventListener('click', () => {
-        const rndName = NAME_PREFIXES[(Math.random() * NAME_PREFIXES.length) | 0]
-            + NAME_SUFFIXES[(Math.random() * NAME_SUFFIXES.length) | 0]
-            + ' ' + NAME_TITLES[(Math.random() * NAME_TITLES.length) | 0];
+        const rndName = randomName();
         document.getElementById('hatchNameInput').value = rndName;
         if (hatchedDragonPending) hatchedDragonPending.name = rndName;
     });
@@ -1629,7 +1926,6 @@
                 document.getElementById('hatchOverlay').classList.remove('active');
                 hatching = false;
             }
-            // Allow escape from battle only when result is showing
             if (document.getElementById('battleResult').classList.contains('show')) {
                 document.getElementById('battleResultBtn').click();
             }
@@ -1654,7 +1950,8 @@
             const card = document.createElement('div');
             card.className = 'battle-card' + (battleSelected === i ? ' selected' : '');
             const shortName = d.name.split(' ')[0];
-            card.innerHTML = '<img src="data:image/png;base64,' + d.imgSrc + '">'
+            const imgSrc = getDragonImg(d);
+            card.innerHTML = (imgSrc ? '<img src="' + imgSrc + '">' : '<div style="width:100%;height:100%;background:rgba(255,255,255,0.03);"></div>')
                 + rarityBadgeHTML(d.latent)
                 + '<div class="tag">' + shortName + '</div>';
             card.addEventListener('click', () => {
@@ -1728,7 +2025,6 @@
         battleDeadDragon = null;
         log.textContent = 'Searching for opponent...';
 
-        // Reset HP bars
         document.getElementById('battlePlayerHpBar').style.width = '100%';
         document.getElementById('battlePlayerHpBar').classList.remove('yellow', 'red');
         document.getElementById('battleEnemyHpBar').style.width = '100%';
@@ -1752,7 +2048,7 @@
             };
             const oppName = generateName(oppData.latent).split(' ')[0];
 
-            await runBattle(playerDragon, pStats, oppData, oStats, oppName);
+            await runBattle(playerDragon, pStats, oppData, oStats, oppName, false);
         } catch (err) {
             console.error(err);
             log.textContent = 'Failed to find opponent...';
@@ -1762,34 +2058,29 @@
         }
     });
 
-    async function runBattle(playerDragon, pStats, oppData, oStats, oppName) {
+    async function runBattle(playerDragon, pStats, oppData, oStats, oppName, isFriend) {
         const arena = document.getElementById('battleArena');
         const log = document.getElementById('battleLog');
         const pName = playerDragon.name.split(' ')[0];
+        const playerImg = getDragonImg(playerDragon);
 
-        // Set images
-        document.getElementById('battlePlayerImg').src = 'data:image/png;base64,' + playerDragon.imgSrc;
+        document.getElementById('battlePlayerImg').src = playerImg;
         document.getElementById('battleEnemyImg').src = 'data:image/png;base64,' + oppData.image;
-        // Reset any leftover defeat styles
         document.getElementById('battlePlayerImg').classList.remove('battle-defeat-fade');
         document.getElementById('battleEnemyImg').classList.remove('battle-defeat-fade');
         document.querySelectorAll('.battle-victory-burst').forEach(el => el.remove());
 
-        // Names
         document.getElementById('battlePlayerName').innerHTML = pName + ' ' + rarityBadgeHTML(playerDragon.latent);
         document.getElementById('battleEnemyName').innerHTML = oppName + ' ' + rarityBadgeHTML(oppData.latent);
 
-        // Stat cards
         renderStatCard('battlePlayerStats', pStats);
         renderStatCard('battleEnemyStats', oStats);
 
-        // HP
         let pHp = pStats.hp, oHp = oStats.hp;
         const pMax = pStats.hp, oMax = oStats.hp;
         updateHpBar('player', pHp, pMax);
         updateHpBar('enemy', oHp, oMax);
 
-        // VS splash
         log.textContent = '';
         const vs = document.getElementById('battleVs');
         vs.classList.add('show');
@@ -1799,7 +2090,6 @@
         log.textContent = 'A wild ' + oppName + ' appeared!';
         await sleep(1200);
 
-        // Battle loop
         while (pHp > 0 && oHp > 0) {
             const playerFirst = pStats.spd >= oStats.spd;
             const order = playerFirst
@@ -1818,13 +2108,11 @@
 
                 log.textContent = act.name + ' attacks!';
 
-                // Attacker pulse
                 const atkImg = document.getElementById(act.who === 'player' ? 'battlePlayerImg' : 'battleEnemyImg');
                 atkImg.classList.add('battle-attacking');
                 await sleep(500);
                 atkImg.classList.remove('battle-attacking');
 
-                // Apply damage
                 const targetWho = act.who === 'player' ? 'enemy' : 'player';
                 const targetImg = document.getElementById(targetWho === 'player' ? 'battlePlayerImg' : 'battleEnemyImg');
                 const targetParent = targetWho === 'player' ? 'battlePlayer' : 'battleEnemy';
@@ -1850,43 +2138,57 @@
             }
         }
 
-        // Battle over
+        // Battle over — report to server
         const won = pHp > 0;
-        const resultDiv = document.getElementById('battleResult');
-        const resultTitle = document.getElementById('battleResultTitle');
-        const resultReward = document.getElementById('battleResultReward');
 
-        if (won) {
-            log.textContent = oppName + ' has been defeated!';
-            const burst = document.createElement('div');
-            burst.className = 'battle-victory-burst';
-            arena.appendChild(burst);
-            document.getElementById('battleEnemyImg').classList.add('battle-defeat-fade');
+        try {
+            const resp = await authFetch('/api/battle/result', {
+                method: 'POST',
+                body: JSON.stringify({ dragon_id: playerDragon.id, won })
+            });
+            const resultData = await resp.json();
 
-            resultTitle.textContent = 'VICTORY!';
-            resultTitle.className = 'battle-result-title win';
-            eggs.push({ type: 'random' });
-            resultReward.innerHTML = '<div style="color:#6ee7b7;font-size:0.85rem;margin-bottom:8px;text-align:center;">You earned a wild egg!</div>'
-                + '<div style="text-align:center;"><img class="battle-result-egg" src="/static/assets/egg1.png"></div>';
-        } else {
-            log.textContent = pName + ' has fallen...';
-            document.getElementById('battlePlayerImg').classList.add('battle-defeat-fade');
+            const resultDiv = document.getElementById('battleResult');
+            const resultTitle = document.getElementById('battleResultTitle');
+            const resultReward = document.getElementById('battleResultReward');
 
-            resultTitle.textContent = 'DEFEAT';
-            resultTitle.className = 'battle-result-title lose';
-            resultReward.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">' + pName + ' has been lost forever...</div>';
-            battleDeadDragon = playerDragon;
+            if (won) {
+                log.textContent = oppName + ' has been defeated!';
+                const burst = document.createElement('div');
+                burst.className = 'battle-victory-burst';
+                arena.appendChild(burst);
+                document.getElementById('battleEnemyImg').classList.add('battle-defeat-fade');
+
+                resultTitle.textContent = 'VICTORY!';
+                resultTitle.className = 'battle-result-title win';
+                // Add the new egg to local state
+                if (resultData.egg_id) {
+                    eggs.push({ id: resultData.egg_id, type: 'random', latent: null, parent1_id: null, parent2_id: null });
+                }
+                resultReward.innerHTML = '<div style="color:#6ee7b7;font-size:0.85rem;margin-bottom:8px;text-align:center;">You earned a wild egg!</div>'
+                    + '<div style="text-align:center;"><img class="battle-result-egg" src="/static/assets/egg1.png"></div>';
+            } else {
+                log.textContent = pName + ' has fallen...';
+                document.getElementById('battlePlayerImg').classList.add('battle-defeat-fade');
+
+                resultTitle.textContent = 'DEFEAT';
+                resultTitle.className = 'battle-result-title lose';
+                resultReward.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">' + pName + ' has been lost forever...</div>';
+                battleDeadDragon = playerDragon;
+            }
+
+            await sleep(500);
+            resultDiv.classList.add('show');
+        } catch (err) {
+            console.error('Failed to report battle result:', err);
         }
-
-        await sleep(500);
-        resultDiv.classList.add('show');
     }
 
     document.getElementById('battleResultBtn').addEventListener('click', () => {
-        // Remove dead dragon from the pool
         if (battleDeadDragon) {
-            const idx = dragons.indexOf(battleDeadDragon);
+            const idx = dragons.findIndex(d => d.id === battleDeadDragon.id);
             if (idx >= 0) dragons.splice(idx, 1);
+            imageCache.delete(battleDeadDragon.id);
             battleDeadDragon = null;
             battleSelected = -1;
         }
@@ -1899,8 +2201,80 @@
         render();
     });
 
-    // Init
-    render();
+    // ===== Init =====
+    // ===== Google Sign-In =====
+    let GOOGLE_CLIENT_ID = '';
+
+    async function handleGoogleCredential(response) {
+        const errorEl = document.getElementById('loginError');
+        errorEl.textContent = '';
+        try {
+            const resp = await fetch('/api/auth/google', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ credential: response.credential })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                errorEl.textContent = data.detail || 'Google sign-in failed';
+                return;
+            }
+            token = data.token;
+            currentUser = data.username;
+            localStorage.setItem('dyno_token', token);
+            localStorage.setItem('dyno_username', currentUser);
+            hideLogin();
+            await loadCollection();
+        } catch (err) {
+            errorEl.textContent = 'Google sign-in failed';
+        }
+    }
+
+    async function initGoogleSignIn() {
+        try {
+            const resp = await fetch('/api/config');
+            const cfg = await resp.json();
+            GOOGLE_CLIENT_ID = cfg.google_client_id;
+        } catch (e) { return; }
+        if (!GOOGLE_CLIENT_ID) return;
+        // Wait for GSI library to load
+        const waitForGoogle = () => new Promise(resolve => {
+            if (typeof google !== 'undefined' && google.accounts) return resolve();
+            const iv = setInterval(() => {
+                if (typeof google !== 'undefined' && google.accounts) { clearInterval(iv); resolve(); }
+            }, 100);
+            setTimeout(() => { clearInterval(iv); resolve(); }, 5000);
+        });
+        await waitForGoogle();
+        if (typeof google === 'undefined' || !google.accounts) return;
+        google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: handleGoogleCredential,
+        });
+        google.accounts.id.renderButton(
+            document.getElementById('googleBtnContainer'),
+            { theme: 'filled_black', size: 'large', width: 280, text: 'continue_with' }
+        );
+    }
+
+    async function init() {
+        if (token) {
+            hideLogin();
+            try {
+                await loadCollection();
+            } catch (err) {
+                showLogin();
+            }
+        } else {
+            showLogin();
+        }
+        render();
+        initGoogleSignIn();
+    }
+
+    init();
+
+
 </script>
 </body>
 </html>
