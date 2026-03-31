@@ -7,6 +7,8 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>DYNO</title>
     <link rel="icon" type="image/png" href="/static/assets/icon.png">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sono:wght@200;300;400;500;600;700;800&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -607,6 +609,81 @@
             80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
             100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
         }
+        /* ===== QR SHARING ===== */
+        .detail-share-btn {
+            margin-top: 12px; padding: 10px 24px;
+            background: var(--surface); border: 1.5px solid var(--border);
+            border-radius: 10px; color: #6ee7b7;
+            font-family: 'Sono', sans-serif; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px; justify-content: center;
+        }
+        .detail-share-btn:active { background: rgba(16,185,129,0.15); }
+        .detail-share-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+        .topbar-scan-btn {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 10px; padding: 5px 10px; cursor: pointer;
+            display: flex; align-items: center; gap: 4px;
+            color: #6ee7b7; font-family: 'Sono', sans-serif; font-size: 0.7rem;
+            transition: all 0.2s;
+        }
+        .topbar-scan-btn:active { background: rgba(16,185,129,0.15); }
+        .topbar-scan-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+        .qr-overlay {
+            position: fixed; inset: 0; z-index: 250;
+            background: rgba(0,0,0,0.95);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: all 0.25s;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            padding: 12px;
+        }
+        .qr-overlay.active { opacity: 1; visibility: visible; }
+        .qr-title {
+            font-size: 1rem; font-weight: 600; color: white;
+            letter-spacing: 1px; margin-bottom: 10px;
+        }
+        .qr-container {
+            background: white; border-radius: 12px; padding: 8px;
+            display: flex; align-items: center; justify-content: center;
+            width: calc(100vw - 24px); max-width: 500px;
+            aspect-ratio: 1;
+        }
+        .qr-container canvas { width: 100% !important; height: 100% !important; image-rendering: pixelated; }
+        .qr-dragon-name {
+            margin-top: 10px; font-size: 0.9rem; font-weight: 600;
+            color: #6ee7b7; letter-spacing: 0.5px;
+        }
+        .qr-hint {
+            margin-top: 4px; font-size: 0.7rem;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .scan-overlay {
+            position: fixed; inset: 0; z-index: 250;
+            background: rgba(0,0,0,0.95);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: all 0.25s;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            padding: 12px; gap: 10px;
+        }
+        .scan-overlay.active { opacity: 1; visibility: visible; }
+        .scan-title {
+            font-size: 1rem; font-weight: 600; color: white;
+            letter-spacing: 1px;
+        }
+        .scan-status {
+            font-size: 0.85rem; color: #6ee7b7; text-align: center;
+        }
+        .scan-status.error { color: var(--red); }
+
+        .received-badge {
+            position: absolute; top: 4px; right: 4px;
+            background: rgba(16,185,129,0.8); color: white;
+            font-size: 0.45rem; font-weight: 700; text-transform: uppercase;
+            padding: 1px 4px; border-radius: 4px; letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
@@ -621,6 +698,10 @@
     <div class="stat" style="margin-left:4px;">
         <img src="/static/assets/black_dragon.png"> <span id="dragonStat">0</span>
     </div>
+    <button class="topbar-scan-btn" id="topbarScanBtn">
+        <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4V4zm2 2v2h2V6H6zm8-2h6v6h-6V4zm2 2v2h2V6h-2zM4 14h6v6H4v-6zm2 2v2h2v-2H6zm10-1h1v1h-1v-1zm-2-1h1v1h-1v-1zm4 0h1v1h-1v-1zm-2 2h1v1h-1v-1zm2 2h1v1h-1v-1zm-4 0h1v1h-1v-1zm0 2h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1z"/></svg>
+        Scan
+    </button>
 </div>
 
 <!-- Tab: Eggs -->
@@ -649,6 +730,10 @@
         <img class="breed-egg-icon" src="/static/assets/egg1.png">
     </div>
     <button class="breed-action-btn" id="breedBtn">Breed!</button>
+    <button class="breed-action-btn ready" id="breedScanBtn" style="background:var(--green);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor;"><path d="M4 4h6v6H4V4zm2 2v2h2V6H6zm8-2h6v6h-6V4zm2 2v2h2V6h-2zM4 14h6v6H4v-6zm2 2v2h2v-2H6zm10-1h1v1h-1v-1zm-2-1h1v1h-1v-1zm4 0h1v1h-1v-1zm-2 2h1v1h-1v-1zm2 2h1v1h-1v-1zm-4 0h1v1h-1v-1zm0 2h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1z"/></svg>
+        Scan Friend's Dragon to Breed
+    </button>
     <div style="margin-top:16px;">
         <div class="breed-dragons-grid" id="breedGrid"></div>
     </div>
@@ -666,6 +751,10 @@
         <div class="battle-stat-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:6px;"><span class="battle-stat-label">Power</span><span class="battle-stat-value" id="bpPower">-</span></div>
     </div>
     <button class="battle-start-btn" id="battleStartBtn">Fight!</button>
+    <button class="battle-start-btn ready" id="battleScanBtn" style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor;"><path d="M4 4h6v6H4V4zm2 2v2h2V6H6zm8-2h6v6h-6V4zm2 2v2h2V6h-2zM4 14h6v6H4v-6zm2 2v2h2v-2H6zm10-1h1v1h-1v-1zm-2-1h1v1h-1v-1zm4 0h1v1h-1v-1zm-2 2h1v1h-1v-1zm2 2h1v1h-1v-1zm-4 0h1v1h-1v-1zm0 2h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1z"/></svg>
+        Scan Friend's Dragon to Battle
+    </button>
     <div class="battle-picker-grid" id="battlePickerGrid"></div>
 </div>
 
@@ -707,7 +796,32 @@
     </div>
     <div style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-top:2px;" id="detailId"></div>
     <div class="detail-rarity" id="detailRarity"></div>
+    <div class="battle-stats-preview visible" id="detailStats" style="margin-top:12px;width:100%;max-width:350px;"></div>
+    <button class="detail-share-btn" id="detailShareBtn">
+        <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4V4zm2 2v2h2V6H6zm8-2h6v6h-6V4zm2 2v2h2V6h-2zM4 14h6v6H4v-6zm2 2v2h2v-2H6zm10-1h1v1h-1v-1zm-2-1h1v1h-1v-1zm4 0h1v1h-1v-1zm-2 2h1v1h-1v-1zm2 2h1v1h-1v-1zm-4 0h1v1h-1v-1zm0 2h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1z"/></svg>
+        Share QR
+    </button>
     <div class="detail-lineage" id="detailLineage"></div>
+    <button class="detail-share-btn" id="detailDeleteBtn" style="margin-top:16px;color:var(--red);border-color:rgba(227,57,11,0.3);">
+        Release Dragon
+    </button>
+</div>
+
+<!-- QR display overlay -->
+<div class="qr-overlay" id="qrOverlay">
+    <div class="detail-close" id="qrClose">&times;</div>
+    <div class="qr-title">Show this to a friend</div>
+    <div class="qr-container" id="qrContainer"></div>
+    <div class="qr-dragon-name" id="qrDragonName"></div>
+    <div class="qr-hint">Friend scans this to receive your dragon</div>
+</div>
+
+<!-- QR scan overlay -->
+<div class="scan-overlay" id="scanOverlay">
+    <div class="detail-close" id="scanClose">&times;</div>
+    <div class="scan-title">Scan a friend's dragon</div>
+    <div id="scanReader" style="width:calc(100vw - 24px);max-width:500px;"></div>
+    <div class="scan-status" id="scanStatus">Point camera at QR code</div>
 </div>
 
 <!-- Hatch overlay -->
@@ -753,7 +867,7 @@
         <!-- Result -->
         <div class="battle-result" id="battleResult">
             <div class="battle-result-title" id="battleResultTitle"></div>
-            <div id="battleResultReward"></div>
+            <div id="battleResultReward" style="display:flex;flex-direction:column;align-items:center;"></div>
             <button class="battle-result-btn" id="battleResultBtn">Continue</button>
         </div>
     </div>
@@ -856,6 +970,253 @@
         };
     }
 
+    // ===== QR SHARING =====
+    function encodeDragonToQR(dragon) {
+        const latent = dragon.latent;
+        let min = Infinity, max = -Infinity;
+        let sumSq = 0;
+        for (let i = 0; i < latent.length; i++) {
+            if (latent[i] < min) min = latent[i];
+            if (latent[i] > max) max = latent[i];
+            sumSq += latent[i] * latent[i];
+        }
+        const origNorm = Math.sqrt(sumSq);
+        const range = max - min || 1;
+
+        // 4-bit quantization: pack 2 values per byte -> 512 bytes
+        // + 4 bytes for original norm to preserve rarity after decode
+        const buf = new Uint8Array(12 + 512);
+        const view = new DataView(buf.buffer);
+        view.setFloat32(0, min, true);
+        view.setFloat32(4, max, true);
+        view.setFloat32(8, origNorm, true);
+
+        for (let i = 0; i < 512; i++) {
+            const hi = Math.round(((latent[i * 2] - min) / range) * 15);
+            const lo = Math.round(((latent[i * 2 + 1] - min) / range) * 15);
+            buf[12 + i] = (hi << 4) | lo;
+        }
+
+        let binary = '';
+        for (let i = 0; i < buf.length; i++) binary += String.fromCharCode(buf[i]);
+        const name = (dragon.name || '').slice(0, 30);
+        return 'DYNO:v2:' + name + ':' + btoa(binary);
+    }
+
+    function decodeDragonFromQR(text) {
+        if (!text.startsWith('DYNO:v2:')) throw new Error('Not a DYNO QR code');
+        const rest = text.slice(8);
+        const colonIdx = rest.lastIndexOf(':');
+        if (colonIdx < 0) throw new Error('Invalid QR format');
+        const name = rest.slice(0, colonIdx);
+        const b64 = rest.slice(colonIdx + 1);
+
+        const binary = atob(b64);
+        const buf = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) buf[i] = binary.charCodeAt(i);
+
+        if (buf.length < 524) throw new Error('QR data too short');
+
+        const view = new DataView(buf.buffer);
+        const min = view.getFloat32(0, true);
+        const max = view.getFloat32(4, true);
+        const origNorm = view.getFloat32(8, true);
+        const range = max - min || 1;
+
+        const latent = new Array(1024);
+        for (let i = 0; i < 512; i++) {
+            const hi = (buf[12 + i] >> 4) & 0x0F;
+            const lo = buf[12 + i] & 0x0F;
+            latent[i * 2] = (hi / 15) * range + min;
+            latent[i * 2 + 1] = (lo / 15) * range + min;
+        }
+
+        // Rescale to preserve original L2 norm (and thus rarity)
+        let sumSq = 0;
+        for (let i = 0; i < 1024; i++) sumSq += latent[i] * latent[i];
+        const currentNorm = Math.sqrt(sumSq);
+        if (currentNorm > 0) {
+            const scale = origNorm / currentNorm;
+            for (let i = 0; i < 1024; i++) latent[i] *= scale;
+        }
+
+        return { latent, name };
+    }
+
+    function showDragonQR(dragon) {
+        const payload = encodeDragonToQR(dragon);
+        const qr = qrcode(0, 'M');
+        qr.addData(payload);
+        qr.make();
+
+        const container = document.getElementById('qrContainer');
+        container.innerHTML = '';
+        const moduleCount = qr.getModuleCount();
+        const cellSize = 8;
+        const margin = cellSize * 4;
+        const canvas = document.createElement('canvas');
+        const size = moduleCount * cellSize + margin * 2;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, size, size);
+        ctx.fillStyle = '#0f5a1e';
+        for (let r = 0; r < moduleCount; r++) {
+            for (let c = 0; c < moduleCount; c++) {
+                if (qr.isDark(r, c)) ctx.fillRect(margin + c * cellSize, margin + r * cellSize, cellSize, cellSize);
+            }
+        }
+        container.appendChild(canvas);
+
+        document.getElementById('qrDragonName').textContent = dragon.name;
+        document.getElementById('qrOverlay').classList.add('active');
+    }
+
+    let html5QrScanner = null;
+
+    // Reusable QR scanner — calls onDragon(dragon) when a dragon is scanned and reconstructed
+    async function scanDragonQR(onDragon) {
+        const overlay = document.getElementById('scanOverlay');
+        const status = document.getElementById('scanStatus');
+        status.textContent = 'Point camera at QR code';
+        status.classList.remove('error');
+        overlay.classList.add('active');
+
+        try {
+            html5QrScanner = new Html5Qrcode('scanReader');
+            await html5QrScanner.start(
+                { facingMode: 'environment' },
+                { fps: 15, qrbox: (w, h) => { const s = Math.floor(Math.min(w, h) * 0.85); return { width: s, height: s }; } },
+                (decodedText) => {
+                    if (!decodedText.startsWith('DYNO:v2:')) return;
+
+                    const scanner = html5QrScanner;
+                    html5QrScanner = null;
+                    status.textContent = 'Dragon found! Reconstructing...';
+                    status.classList.remove('error');
+
+                    scanner.stop().then(async () => {
+                        try {
+                            const { latent, name } = decodeDragonFromQR(decodedText);
+                            const resp = await fetch('/api/hatch_latent', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ latent })
+                            });
+                            const data = await resp.json();
+
+                            const dragonName = name || generateName(latent);
+                            const dragon = {
+                                id: nextId++,
+                                name: dragonName,
+                                latent: data.latent,
+                                imgSrc: data.image,
+                                parent1Id: null,
+                                parent2Id: null,
+                                received: true
+                            };
+                            overlay.classList.remove('active');
+                            onDragon(dragon);
+                        } catch (err) {
+                            status.textContent = err.message || 'Failed to reconstruct dragon';
+                            status.classList.add('error');
+                        }
+                    }).catch(() => {});
+                },
+                () => {}
+            );
+        } catch (err) {
+            status.textContent = 'Camera access denied. Enable camera in browser settings.';
+            status.classList.add('error');
+        }
+    }
+
+    // Top bar scan: adds dragon to collection
+    function startQRScan() {
+        scanDragonQR((dragon) => {
+            dragons.push(dragon);
+            render();
+            showDetail(dragon);
+        });
+    }
+
+    function stopQRScan() {
+        if (html5QrScanner) {
+            html5QrScanner.stop().catch(() => {});
+            html5QrScanner = null;
+        }
+        document.getElementById('scanOverlay').classList.remove('active');
+    }
+
+    // QR overlay close
+    document.getElementById('qrClose').addEventListener('click', () => {
+        document.getElementById('qrOverlay').classList.remove('active');
+    });
+    document.getElementById('qrOverlay').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('qrOverlay'))
+            document.getElementById('qrOverlay').classList.remove('active');
+    });
+
+    // Scan overlay close
+    document.getElementById('scanClose').addEventListener('click', stopQRScan);
+    document.getElementById('scanOverlay').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('scanOverlay')) stopQRScan();
+    });
+
+    // Share button in detail overlay
+    document.getElementById('detailShareBtn').addEventListener('click', () => {
+        if (detailDragon) showDragonQR(detailDragon);
+    });
+
+    // Scan button in top bar
+    document.getElementById('topbarScanBtn').addEventListener('click', startQRScan);
+
+    // Breed with friend's dragon via QR
+    let scannedBreedDragon = null;
+
+    document.getElementById('breedScanBtn').addEventListener('click', () => {
+        scanDragonQR((dragon) => {
+            scannedBreedDragon = dragon;
+            // Auto-select scanned dragon as second parent
+            selected = selected.slice(0, 1); // keep first selection if any
+            renderBreedTab();
+        });
+    });
+
+    // Battle friend's dragon via QR
+    document.getElementById('battleScanBtn').addEventListener('click', () => {
+        if (battleSelected < 0 || !dragons[battleSelected]) {
+            alert('Select your champion first, then scan your friend\'s dragon!');
+            return;
+        }
+        scanDragonQR(async (dragon) => {
+            if (battling) return;
+            battling = true;
+
+            const playerDragon = dragons[battleSelected];
+            const pStats = computeStats(playerDragon.latent);
+            const oStats = computeStats(dragon.latent);
+
+            const overlay = document.getElementById('battleOverlay');
+            const log = document.getElementById('battleLog');
+            document.getElementById('battleResult').classList.remove('show');
+            document.getElementById('battleVs').classList.remove('show');
+            battleDeadDragon = null;
+            log.textContent = 'A challenger approaches...';
+
+            document.getElementById('battlePlayerHpBar').style.width = '100%';
+            document.getElementById('battlePlayerHpBar').classList.remove('yellow', 'red');
+            document.getElementById('battleEnemyHpBar').style.width = '100%';
+            document.getElementById('battleEnemyHpBar').classList.remove('yellow', 'red');
+
+            overlay.classList.add('active');
+
+            const oppName = dragon.name.split(' ')[0];
+            await runBattle(playerDragon, pStats, { latent: dragon.latent, image: dragon.imgSrc }, oStats, oppName);
+        });
+    });
+
     // ===== Tab navigation =====
     document.querySelectorAll('.nav-item').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -935,7 +1296,8 @@
                 card.className = 'dragon-card';
                 const shortName = d.name.split(' ')[0]; // Just the first name on the card
                 card.innerHTML = '<img src="data:image/png;base64,' + d.imgSrc + '">'
-                    + '<div class="tag">' + shortName + '</div>';
+                    + '<div class="tag">' + shortName + '</div>'
+                    + (d.received ? '<div class="received-badge">Received</div>' : '');
                 card.addEventListener('click', () => showDetail(d));
                 grid.appendChild(card);
             });
@@ -958,6 +1320,15 @@
         const rarityDiv = document.getElementById('detailRarity');
         rarityDiv.innerHTML = '<span class="rarity-badge rarity-' + r.tier + '">' + r.label + '</span>'
             + '<span class="detail-rarity-score">' + r.sigma.toFixed(1) + 'σ from mean</span>';
+
+        // Stats
+        const s = computeStats(dragon.latent);
+        document.getElementById('detailStats').innerHTML =
+            '<div class="battle-stat-row"><span class="battle-stat-label">HP</span><span class="battle-stat-value">' + s.hp + '</span></div>'
+            + '<div class="battle-stat-row"><span class="battle-stat-label">ATK</span><span class="battle-stat-value">' + s.atk + '</span></div>'
+            + '<div class="battle-stat-row"><span class="battle-stat-label">DEF</span><span class="battle-stat-value">' + s.def + '</span></div>'
+            + '<div class="battle-stat-row"><span class="battle-stat-label">SPD</span><span class="battle-stat-value">' + s.spd + '</span></div>'
+            + '<div class="battle-stat-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:6px;"><span class="battle-stat-label">Power</span><span class="battle-stat-value">' + s.power + '</span></div>';
 
         const lineageDiv = document.getElementById('detailLineage');
         lineageDiv.innerHTML = '';
@@ -1051,6 +1422,16 @@
         render();
     });
 
+    document.getElementById('detailDeleteBtn').addEventListener('click', () => {
+        if (!detailDragon) return;
+        if (!confirm('Release ' + detailDragon.name + '? This cannot be undone.')) return;
+        const idx = dragons.indexOf(detailDragon);
+        if (idx >= 0) dragons.splice(idx, 1);
+        detailDragon = null;
+        document.getElementById('detailOverlay').classList.remove('active');
+        render();
+    });
+
     document.getElementById('detailClose').addEventListener('click', () => {
         document.getElementById('detailOverlay').classList.remove('active');
     });
@@ -1075,6 +1456,7 @@
                     + rarityBadgeHTML(d.latent)
                     + '<div class="tag">' + shortName + '</div>';
                 card.addEventListener('click', () => {
+                    scannedBreedDragon = null; // clear scanned dragon on manual selection
                     const pos = selected.indexOf(i);
                     if (pos >= 0) selected.splice(pos, 1);
                     else if (selected.length < 2) selected.push(i);
@@ -1092,18 +1474,25 @@
             s1.innerHTML = '<img src="data:image/png;base64,' + dragons[selected[0]].imgSrc + '">';
             s1.classList.add('filled');
         } else { s1.innerHTML = '<span class="ph">?</span>'; s1.classList.remove('filled'); }
-        if (selected.length >= 2 && dragons[selected[1]]) {
+
+        if (scannedBreedDragon) {
+            s2.innerHTML = '<img src="data:image/png;base64,' + scannedBreedDragon.imgSrc + '">';
+            s2.classList.add('filled');
+        } else if (selected.length >= 2 && dragons[selected[1]]) {
             s2.innerHTML = '<img src="data:image/png;base64,' + dragons[selected[1]].imgSrc + '">';
             s2.classList.add('filled');
         } else { s2.innerHTML = '<span class="ph">?</span>'; s2.classList.remove('filled'); }
 
-        document.getElementById('breedBtn').classList.toggle('ready', selected.length === 2);
+        const canBreed = scannedBreedDragon ? selected.length >= 1 : selected.length === 2;
+        document.getElementById('breedBtn').classList.toggle('ready', canBreed);
     }
 
     document.getElementById('breedBtn').addEventListener('click', async () => {
-        if (selected.length !== 2) return;
+        const hasScanned = !!scannedBreedDragon;
+        if (hasScanned && selected.length < 1) return;
+        if (!hasScanned && selected.length !== 2) return;
         const d1 = dragons[selected[0]];
-        const d2 = dragons[selected[1]];
+        const d2 = hasScanned ? scannedBreedDragon : dragons[selected[1]];
         const resp = await fetch('/api/breed', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1112,6 +1501,7 @@
         const data = await resp.json();
         eggs.push({ type: 'bred', latent: data.latent, parent1Id: d1.id, parent2Id: d2.id });
         selected = [];
+        scannedBreedDragon = null;
         render();
         // Switch to eggs tab
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
@@ -1232,6 +1622,8 @@
     // Escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
+            document.getElementById('qrOverlay').classList.remove('active');
+            stopQRScan();
             document.getElementById('detailOverlay').classList.remove('active');
             if (document.getElementById('hatchContinue').classList.contains('show')) {
                 document.getElementById('hatchOverlay').classList.remove('active');
@@ -1474,8 +1866,8 @@
             resultTitle.textContent = 'VICTORY!';
             resultTitle.className = 'battle-result-title win';
             eggs.push({ type: 'random' });
-            resultReward.innerHTML = '<div style="color:#6ee7b7;font-size:0.85rem;margin-bottom:8px;">You earned a wild egg!</div>'
-                + '<img class="battle-result-egg" src="/static/assets/egg1.png">';
+            resultReward.innerHTML = '<div style="color:#6ee7b7;font-size:0.85rem;margin-bottom:8px;text-align:center;">You earned a wild egg!</div>'
+                + '<div style="text-align:center;"><img class="battle-result-egg" src="/static/assets/egg1.png"></div>';
         } else {
             log.textContent = pName + ' has fallen...';
             document.getElementById('battlePlayerImg').classList.add('battle-defeat-fade');
