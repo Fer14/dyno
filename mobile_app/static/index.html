@@ -277,7 +277,7 @@
         .breed-preview-slot img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
         .breed-preview-slot .ph { color: rgba(255,255,255,0.15); font-size: 1.5rem; }
         .breed-sym { color: rgba(255,255,255,0.25); font-size: 1.5rem; }
-        .breed-egg-icon { width: 32px; height: 42px; opacity: 0.3; }
+        .breed-egg-icon { width: 32px; height: auto; opacity: 0.3; object-fit: contain; }
 
         .breed-action-btn {
             display: block; width: 100%; padding: 14px;
@@ -474,13 +474,25 @@
             flex: 1; position: relative; overflow: hidden;
             background: radial-gradient(ellipse at 50% 80%, rgba(25,155,52,0.08) 0%, transparent 70%);
         }
+        .battle-arena::before {
+            content: ''; position: absolute; top: 50%; left: 5%; right: 5%;
+            height: 1px; transform: translateY(-0.5px);
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 20%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.15) 80%, transparent 100%);
+            box-shadow: 0 0 8px rgba(255,255,255,0.1), 0 0 20px rgba(16,185,129,0.15);
+            z-index: 1;
+            animation: arenaLinePulse 3s ease-in-out infinite;
+        }
+        @keyframes arenaLinePulse {
+            0%, 100% { opacity: 0.4; box-shadow: 0 0 8px rgba(255,255,255,0.1), 0 0 20px rgba(16,185,129,0.1); }
+            50%      { opacity: 0.8; box-shadow: 0 0 12px rgba(255,255,255,0.2), 0 0 30px rgba(16,185,129,0.25); }
+        }
 
         .battle-enemy {
             position: absolute; top: 8%; right: 5%;
             display: flex; flex-direction: column; align-items: center;
         }
         .battle-enemy-img {
-            width: 120px; height: 120px; image-rendering: pixelated;
+            width: 200px; height: 200px; image-rendering: pixelated;
             border-radius: 12px;
             transform: scaleX(-1);
             transition: filter 0.15s;
@@ -491,20 +503,20 @@
             display: flex; flex-direction: column; align-items: center;
         }
         .battle-player-img {
-            width: 140px; height: 140px; image-rendering: pixelated;
+            width: 220px; height: 220px; image-rendering: pixelated;
             border-radius: 12px;
             transition: filter 0.15s;
         }
 
-        .battle-hp-wrap { width: 140px; margin-top: 6px; }
+        .battle-hp-wrap { width: 220px; margin-top: 6px; }
         .battle-hp-name {
-            font-size: 0.65rem; color: rgba(255,255,255,0.6);
+            font-size: 0.75rem; color: rgba(255,255,255,0.6);
             margin-bottom: 2px; text-align: center;
             display: flex; align-items: center; justify-content: center; gap: 4px;
         }
         .battle-hp-name .rarity-badge { font-size: 0.5rem; padding: 1px 5px; }
         .battle-hp-bar-outer {
-            width: 100%; height: 10px; border-radius: 5px;
+            width: 100%; height: 12px; border-radius: 6px;
             background: rgba(255,255,255,0.1);
             overflow: hidden; border: 1px solid rgba(255,255,255,0.15);
         }
@@ -517,10 +529,10 @@
         .battle-hp-bar-inner.yellow { background: linear-gradient(90deg, #eab308, #f59e0b); }
         .battle-hp-bar-inner.red { background: linear-gradient(90deg, #ef4444, #dc2626); }
         .battle-hp-text {
-            font-size: 0.6rem; color: rgba(255,255,255,0.4);
+            font-size: 0.7rem; color: rgba(255,255,255,0.4);
             text-align: center; margin-top: 2px;
         }
-        .battle-enemy .battle-hp-wrap { width: 120px; }
+        .battle-enemy .battle-hp-wrap { width: 200px; }
 
         .battle-log {
             padding: 12px 16px; padding-bottom: calc(12px + var(--safe-bottom));
@@ -533,8 +545,8 @@
         .battle-stat-bars {
             position: absolute; bottom: 4%; right: 4%;
             background: rgba(0,0,0,0.5); border: 1px solid var(--border);
-            border-radius: 10px; padding: 8px 12px; font-size: 0.65rem;
-            min-width: 110px;
+            border-radius: 10px; padding: 10px 16px; font-size: 0.8rem;
+            min-width: 130px;
         }
         .battle-stat-bars.left { right: auto; left: 4%; bottom: auto; top: 4%; }
         .battle-stat-mini {
@@ -745,6 +757,185 @@
             animation: spin 0.8s linear infinite;
         }
         .loading-text { font-size: 0.85rem; color: rgba(255,255,255,0.4); }
+
+        /* ===== HATCH EFFECTS ===== */
+        .hatch-particles {
+            position: absolute; top: 50%; left: 50%;
+            width: 0; height: 0; pointer-events: none; z-index: 10;
+        }
+        .hatch-particle {
+            position: absolute; width: 8px; height: 8px;
+            border-radius: 50%;
+            animation: particleBurst 0.8s ease-out forwards;
+        }
+        .hatch-particle:nth-child(1)  { --angle: 0deg; }
+        .hatch-particle:nth-child(2)  { --angle: 30deg; }
+        .hatch-particle:nth-child(3)  { --angle: 60deg; }
+        .hatch-particle:nth-child(4)  { --angle: 90deg; }
+        .hatch-particle:nth-child(5)  { --angle: 120deg; }
+        .hatch-particle:nth-child(6)  { --angle: 150deg; }
+        .hatch-particle:nth-child(7)  { --angle: 180deg; }
+        .hatch-particle:nth-child(8)  { --angle: 210deg; }
+        .hatch-particle:nth-child(9)  { --angle: 240deg; }
+        .hatch-particle:nth-child(10) { --angle: 270deg; }
+        .hatch-particle:nth-child(11) { --angle: 300deg; }
+        .hatch-particle:nth-child(12) { --angle: 330deg; }
+        @keyframes particleBurst {
+            0%   { opacity: 1; transform: rotate(var(--angle)) translateY(0) scale(1); }
+            100% { opacity: 0; transform: rotate(var(--angle)) translateY(-120px) scale(0.3); }
+        }
+        .hatch-flash {
+            position: fixed; inset: 0; z-index: 301;
+            pointer-events: none; opacity: 0;
+            animation: hatchFlash 0.5s ease-out forwards;
+        }
+        @keyframes hatchFlash {
+            0%   { opacity: 0.9; }
+            100% { opacity: 0; }
+        }
+        .hatch-result.dragon-entrance img {
+            animation: dragonEntrance 0.8s ease-out;
+        }
+        @keyframes dragonEntrance {
+            0%   { transform: translateY(40px) scale(0.7); opacity: 0;
+                   filter: drop-shadow(0 0 0px transparent); }
+            50%  { transform: translateY(-5px) scale(1.05); opacity: 1;
+                   filter: drop-shadow(0 0 25px rgba(245,158,11,0.8)); }
+            100% { transform: translateY(0) scale(1); opacity: 1;
+                   filter: drop-shadow(0 0 8px rgba(245,158,11,0.3)); }
+        }
+
+        /* ===== BREED EFFECTS ===== */
+        .breed-preview-slot.merging {
+            animation: breedPulse 0.6s ease-in-out;
+        }
+        @keyframes breedPulse {
+            0%   { transform: scale(1) translateX(0); }
+            50%  { transform: scale(1.15) translateX(var(--merge-dir, 10px));
+                   filter: brightness(1.4) drop-shadow(0 0 12px var(--red)); }
+            100% { transform: scale(0.9) translateX(var(--merge-dir, 10px)); opacity: 0.6; }
+        }
+        .breed-center-flash {
+            position: absolute; top: 50%; left: 50%;
+            width: 80px; height: 80px; margin: -40px 0 0 -40px;
+            border-radius: 50%; pointer-events: none;
+            background: radial-gradient(circle, rgba(227,57,11,0.8) 0%, transparent 70%);
+            animation: breedFlash 0.6s ease-out forwards;
+        }
+        @keyframes breedFlash {
+            0%   { transform: scale(0.3); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+        .breed-egg-appear {
+            animation: eggMaterialize 0.8s ease-out forwards;
+        }
+        @keyframes eggMaterialize {
+            0%   { transform: scale(0); opacity: 0;
+                   filter: drop-shadow(0 0 0px transparent); }
+            60%  { transform: scale(1.2); opacity: 1;
+                   filter: drop-shadow(0 0 20px rgba(227,57,11,0.7)); }
+            100% { transform: scale(1); opacity: 1;
+                   filter: drop-shadow(0 0 6px rgba(227,57,11,0.3)); }
+        }
+        .breed-preview.loading {
+            background: linear-gradient(90deg, var(--surface) 25%, rgba(227,57,11,0.12) 50%, var(--surface) 75%);
+            background-size: 200% 100%;
+            animation: breedShimmer 1.2s ease-in-out infinite;
+        }
+        @keyframes breedShimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .breed-toast {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 350; background: rgba(0,0,0,0.9); border: 2px solid var(--red);
+            border-radius: 16px; padding: 24px 32px; text-align: center;
+            animation: toastIn 0.4s ease-out, toastOut 0.4s 1.4s ease-in forwards;
+            pointer-events: none;
+        }
+        .breed-toast-title {
+            color: white; font-size: 1.2rem; font-weight: 700; letter-spacing: 1px;
+        }
+        .breed-toast-sub {
+            color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-top: 4px;
+        }
+        @keyframes toastIn {
+            0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes toastOut {
+            0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        }
+
+        /* ===== BATTLE EFFECTS ===== */
+        .battle-slash {
+            position: absolute; top: 30%; left: 30%;
+            width: 50px; height: 50px; pointer-events: none; z-index: 10;
+            border-left: 3px solid rgba(255,255,255,0.9);
+            border-top: 3px solid rgba(255,255,255,0.9);
+            transform: rotate(45deg);
+            animation: slashFade 0.35s ease-out forwards;
+        }
+        @keyframes slashFade {
+            0%   { opacity: 1; transform: rotate(45deg) scale(0.5); }
+            50%  { opacity: 0.8; transform: rotate(45deg) scale(1.2); }
+            100% { opacity: 0; transform: rotate(45deg) scale(1.5); }
+        }
+        .battle-knockback {
+            animation: knockback 0.3s ease-out;
+        }
+        @keyframes knockback {
+            0%   { transform: translateX(0); }
+            40%  { transform: translateX(12px); }
+            100% { transform: translateX(0); }
+        }
+        .battle-enemy-img.battle-knockback {
+            animation: knockbackEnemy 0.3s ease-out;
+        }
+        @keyframes knockbackEnemy {
+            0%   { transform: scaleX(-1) translateX(0); }
+            40%  { transform: scaleX(-1) translateX(-12px); }
+            100% { transform: scaleX(-1) translateX(0); }
+        }
+        .damage-number.crit {
+            font-size: 2.2rem;
+            color: #f59e0b;
+            text-shadow: 0 2px 12px rgba(245,158,11,0.9), 0 0 6px rgba(0,0,0,0.9);
+        }
+        .battle-arena.shake-hard { animation: screenShakeHard 0.4s ease-in-out; }
+        @keyframes screenShakeHard {
+            0%, 100% { transform: translate(0,0); }
+            10% { transform: translate(-8px, 4px); }
+            20% { transform: translate(8px, -4px); }
+            30% { transform: translate(-6px, 6px); }
+            40% { transform: translate(6px, -3px); }
+            50% { transform: translate(-4px, 2px); }
+            60% { transform: translate(4px, -4px); }
+            70% { transform: translate(-3px, 3px); }
+            80% { transform: translate(2px, -1px); }
+        }
+        .battle-low-hp {
+            animation: dangerPulse 0.8s ease-in-out infinite;
+        }
+        @keyframes dangerPulse {
+            0%, 100% { filter: drop-shadow(0 0 0px transparent); }
+            50%      { filter: drop-shadow(0 0 10px rgba(239,68,68,0.6)); }
+        }
+        .battle-enemy-img.battle-low-hp {
+            animation: dangerPulseEnemy 0.8s ease-in-out infinite;
+        }
+        @keyframes dangerPulseEnemy {
+            0%, 100% { filter: drop-shadow(0 0 0px transparent); transform: scaleX(-1); }
+            50%      { filter: drop-shadow(0 0 10px rgba(239,68,68,0.6)); transform: scaleX(-1); }
+        }
+        .battle-winner-pulse {
+            animation: winnerPulse 0.6s ease-in-out 3;
+        }
+        @keyframes winnerPulse {
+            0%, 100% { filter: drop-shadow(0 0 0px transparent); transform: scale(1); }
+            50%      { filter: drop-shadow(0 0 20px rgba(245,158,11,0.7)); transform: scale(1.06); }
+        }
     </style>
 </head>
 <body>
@@ -1774,6 +1965,24 @@
         const d1 = dragons.find(d => d.id === selected[0]);
         if (!d1) return;
 
+        const preview = document.getElementById('breedPreview');
+        const s1 = document.getElementById('bSlot1');
+        const s2 = document.getElementById('bSlot2');
+        const eggIcon = preview.querySelector('.breed-egg-icon');
+
+        // Phase 1: Parent merge animation
+        s1.style.setProperty('--merge-dir', '20px');
+        s2.style.setProperty('--merge-dir', '-20px');
+        s1.classList.add('merging');
+        s2.classList.add('merging');
+        await sleep(600);
+
+        // Phase 2: Center flash + shimmer during API call
+        breedCenterFlash(preview);
+        preview.classList.add('loading');
+        s1.classList.remove('merging');
+        s2.classList.remove('merging');
+
         try {
             const body = { dragon1_id: d1.id };
             if (hasScanned) {
@@ -1787,6 +1996,20 @@
                 body: JSON.stringify(body)
             });
             const data = await resp.json();
+
+            preview.classList.remove('loading');
+
+            // Phase 3: Egg materialization
+            eggIcon.style.opacity = '1';
+            eggIcon.classList.add('breed-egg-appear');
+            await sleep(800);
+            eggIcon.classList.remove('breed-egg-appear');
+            eggIcon.style.opacity = '0.3';
+
+            // Phase 4: Success toast
+            showBreedToast();
+            await sleep(800);
+
             eggs.push({
                 id: data.egg_id,
                 type: 'bred',
@@ -1803,6 +2026,7 @@
             document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
             document.getElementById('pageEggs').classList.add('active');
         } catch (err) {
+            preview.classList.remove('loading');
             console.error('Breed failed:', err);
         }
     });
@@ -1825,7 +2049,7 @@
         spinner.classList.remove('on');
         resultImg.src = '';
         result.style.transition = 'none';
-        result.classList.remove('show');
+        result.classList.remove('show', 'dragon-entrance');
         continueBtn.classList.remove('show');
         result.offsetHeight;
         result.style.transition = '';
@@ -1848,12 +2072,18 @@
 
             spinner.classList.remove('on');
             eggEl.style.display = 'none';
-            resultImg.src = 'data:image/png;base64,' + data.image;
+
+            // Particle burst + screen flash
             const r = computeRarity(data.latent);
+            const particleColor = RARITY_PARTICLE_COLORS[r.tier] || '#34d399';
+            createHatchFlash(particleColor);
+            spawnHatchParticles(particleColor);
+
+            resultImg.src = 'data:image/png;base64,' + data.image;
             document.getElementById('hatchNameInput').value = data.name;
             document.getElementById('hatchRarity').innerHTML =
                 '<span class="rarity-badge rarity-' + r.tier + '">' + r.label + '</span>';
-            result.classList.add('show');
+            result.classList.add('show', 'dragon-entrance');
             await sleep(500);
             continueBtn.classList.add('show');
 
@@ -1934,6 +2164,59 @@
 
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+    // ===== Visual effect helpers =====
+    const RARITY_PARTICLE_COLORS = {
+        common: '#9ca3af', uncommon: '#34d399', rare: '#60a5fa',
+        epic: '#a78bfa', legendary: '#f59e0b'
+    };
+
+    function spawnHatchParticles(color) {
+        const overlay = document.getElementById('hatchOverlay');
+        const container = document.createElement('div');
+        container.className = 'hatch-particles';
+        for (let i = 0; i < 12; i++) {
+            const p = document.createElement('div');
+            p.className = 'hatch-particle';
+            p.style.background = color;
+            container.appendChild(p);
+        }
+        overlay.appendChild(container);
+        setTimeout(() => container.remove(), 900);
+    }
+
+    function createHatchFlash(color) {
+        const flash = document.createElement('div');
+        flash.className = 'hatch-flash';
+        flash.style.background = 'radial-gradient(circle, ' + color + ' 0%, transparent 70%)';
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 600);
+    }
+
+    function showBreedToast() {
+        const toast = document.createElement('div');
+        toast.className = 'breed-toast';
+        toast.innerHTML = '<div class="breed-toast-title">Egg Created!</div>'
+            + '<div class="breed-toast-sub">Check your nursery</div>';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+    }
+
+    function breedCenterFlash(previewEl) {
+        const flash = document.createElement('div');
+        flash.className = 'breed-center-flash';
+        previewEl.style.position = 'relative';
+        previewEl.appendChild(flash);
+        setTimeout(() => flash.remove(), 700);
+    }
+
+    function spawnSlash(parentId) {
+        const parent = document.getElementById(parentId);
+        const el = document.createElement('div');
+        el.className = 'battle-slash';
+        parent.appendChild(el);
+        setTimeout(() => el.remove(), 400);
+    }
+
     // ===== BATTLE TAB =====
     let battleSelected = -1;
 
@@ -1993,11 +2276,11 @@
         text.textContent = hp + ' / ' + maxHp;
     }
 
-    function spawnDamageNumber(parentId, dmg) {
+    function spawnDamageNumber(parentId, dmg, isCrit) {
         const parent = document.getElementById(parentId);
         const el = document.createElement('div');
-        el.className = 'damage-number';
-        el.textContent = '-' + dmg;
+        el.className = 'damage-number' + (isCrit ? ' crit' : '');
+        el.textContent = (isCrit ? 'CRIT -' : '-') + dmg;
         el.style.left = (30 + Math.random() * 60) + 'px';
         el.style.top = '20px';
         parent.appendChild(el);
@@ -2105,6 +2388,7 @@
                 const baseDmg = act.atk * (1 - defReduction);
                 const variance = 0.85 + Math.random() * 0.3;
                 const dmg = Math.max(1, Math.round(baseDmg * variance));
+                const isCrit = variance > 1.10;
 
                 log.textContent = act.name + ' attacks!';
 
@@ -2117,23 +2401,33 @@
                 const targetImg = document.getElementById(targetWho === 'player' ? 'battlePlayerImg' : 'battleEnemyImg');
                 const targetParent = targetWho === 'player' ? 'battlePlayer' : 'battleEnemy';
 
-                targetImg.classList.add('battle-hit');
-                spawnDamageNumber(targetParent, dmg);
-                arena.classList.add('shake');
+                targetImg.classList.add('battle-hit', 'battle-knockback');
+                spawnDamageNumber(targetParent, dmg, isCrit);
+                spawnSlash(targetParent);
+                arena.classList.add(isCrit ? 'shake-hard' : 'shake');
 
                 if (act.who === 'player') {
                     oHp = Math.max(0, oHp - dmg);
                     updateHpBar('enemy', oHp, oMax);
-                    log.textContent = pName + ' deals ' + dmg + ' damage!';
+                    log.textContent = pName + (isCrit ? ' lands a CRITICAL HIT for ' : ' deals ') + dmg + ' damage!';
                 } else {
                     pHp = Math.max(0, pHp - dmg);
                     updateHpBar('player', pHp, pMax);
-                    log.textContent = oppName + ' deals ' + dmg + ' damage!';
+                    log.textContent = oppName + (isCrit ? ' lands a CRITICAL HIT for ' : ' deals ') + dmg + ' damage!';
                 }
 
                 await sleep(300);
-                targetImg.classList.remove('battle-hit');
-                arena.classList.remove('shake');
+                targetImg.classList.remove('battle-hit', 'battle-knockback');
+                arena.classList.remove('shake', 'shake-hard');
+
+                // Low HP danger pulse
+                const pImg = document.getElementById('battlePlayerImg');
+                const eImg = document.getElementById('battleEnemyImg');
+                if (pHp > 0 && pHp / pMax <= 0.25) pImg.classList.add('battle-low-hp');
+                else pImg.classList.remove('battle-low-hp');
+                if (oHp > 0 && oHp / oMax <= 0.25) eImg.classList.add('battle-low-hp');
+                else eImg.classList.remove('battle-low-hp');
+
                 await sleep(800);
             }
         }
@@ -2152,12 +2446,17 @@
             const resultTitle = document.getElementById('battleResultTitle');
             const resultReward = document.getElementById('battleResultReward');
 
+            // Clear danger pulse
+            document.getElementById('battlePlayerImg').classList.remove('battle-low-hp');
+            document.getElementById('battleEnemyImg').classList.remove('battle-low-hp');
+
             if (won) {
                 log.textContent = oppName + ' has been defeated!';
                 const burst = document.createElement('div');
                 burst.className = 'battle-victory-burst';
                 arena.appendChild(burst);
                 document.getElementById('battleEnemyImg').classList.add('battle-defeat-fade');
+                document.getElementById('battlePlayerImg').classList.add('battle-winner-pulse');
 
                 resultTitle.textContent = 'VICTORY!';
                 resultTitle.className = 'battle-result-title win';
@@ -2194,8 +2493,8 @@
         }
         document.getElementById('battleOverlay').classList.remove('active');
         document.querySelectorAll('.battle-victory-burst').forEach(el => el.remove());
-        document.getElementById('battleEnemyImg').classList.remove('battle-defeat-fade');
-        document.getElementById('battlePlayerImg').classList.remove('battle-defeat-fade');
+        document.getElementById('battleEnemyImg').classList.remove('battle-defeat-fade', 'battle-low-hp');
+        document.getElementById('battlePlayerImg').classList.remove('battle-defeat-fade', 'battle-low-hp', 'battle-winner-pulse');
         document.getElementById('battleResult').classList.remove('show');
         battling = false;
         render();
