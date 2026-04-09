@@ -154,6 +154,9 @@
             filter: drop-shadow(0 3px 8px var(--green-glow));
         }
         .egg-card.bred img { filter: drop-shadow(0 3px 8px rgba(227,57,11,0.5)); }
+        .egg-card.golden img { filter: drop-shadow(0 3px 12px rgba(245,158,11,0.7)); }
+        .egg-card.golden .egg-label { color: #f59e0b; }
+        .egg-card.golden { border-color: rgba(245,158,11,0.4); }
         .egg-card .egg-label {
             font-size: 0.6rem; color: rgba(255,255,255,0.5); margin-top: 4px;
             text-transform: uppercase; letter-spacing: 0.5px;
@@ -178,6 +181,18 @@
         }
         .dragon-card img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
         .dragon-card:active { transform: scale(0.95); }
+        .dragon-card.selected {
+            border: 3px solid var(--green);
+            box-shadow: 0 0 12px var(--green-glow);
+        }
+        #breedGrid .dragon-card.selected {
+            border-color: #c2680a;
+            box-shadow: 0 0 12px rgba(194,104,10,0.5);
+        }
+        #battlePickerGrid .dragon-card.selected {
+            border-color: #7c3aed;
+            box-shadow: 0 0 12px rgba(124,58,237,0.5);
+        }
         .dragon-card .tag {
             position: absolute; bottom: 0; left: 0; right: 0;
             background: rgba(0,0,0,0.75); font-size: 0.6rem;
@@ -222,9 +237,9 @@
             text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;
         }
         .lineage-row {
-            display: flex; align-items: center; gap: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 16px;
             background: var(--surface); border: 1px solid var(--border);
-            border-radius: 12px; padding: 10px;
+            border-radius: 12px; padding: 12px;
         }
         .lineage-row img {
             width: 48px; height: 48px; border-radius: 8px;
@@ -240,8 +255,7 @@
 
         /* ===== BREED TAB ===== */
         .breed-dragons-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-            gap: 10px; margin-bottom: 16px;
+            margin-bottom: 16px;
         }
         .breed-card {
             border-radius: 12px; overflow: hidden;
@@ -355,6 +369,16 @@
         .rarity-rare        { background: #2563eb; color: #dbeafe; }
         .rarity-epic        { background: #7c3aed; color: #ede9fe; }
         .rarity-legendary   { background: linear-gradient(135deg, #f59e0b, #ef4444); color: #fff; }
+        .rarity-mythic      {
+            background: linear-gradient(135deg, #dc2626, #7c3aed, #dc2626);
+            background-size: 200% 100%;
+            animation: mythicShimmer 2s linear infinite;
+            color: #fff; text-shadow: 0 0 6px rgba(220,38,38,0.6);
+        }
+        @keyframes mythicShimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
 
         .dragon-card .rarity-badge, .breed-card .rarity-badge, .battle-card .rarity-badge {
             position: absolute; top: 4px; left: 4px;
@@ -418,8 +442,7 @@
 
         /* ===== BATTLE TAB ===== */
         .battle-picker-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-            gap: 10px; margin-top: 16px;
+            margin-top: 16px;
         }
         .battle-card {
             border-radius: 12px; overflow: hidden;
@@ -452,7 +475,7 @@
         .battle-stat-value { color: #6ee7b7; font-weight: 600; }
         .battle-start-btn {
             display: block; width: 100%; padding: 14px; margin-top: 16px;
-            background: var(--green); color: white; border: none;
+            background: #7c3aed; color: white; border: none;
             border-radius: 12px; font-family: 'Sono', sans-serif;
             font-size: 1rem; font-weight: 600; cursor: pointer;
             transition: all 0.2s; opacity: 0.3; pointer-events: none;
@@ -936,6 +959,350 @@
             0%, 100% { filter: drop-shadow(0 0 0px transparent); transform: scale(1); }
             50%      { filter: drop-shadow(0 0 20px rgba(245,158,11,0.7)); transform: scale(1.06); }
         }
+
+        /* ===== MODAL DIALOG ===== */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 600;
+            background: rgba(0,0,0,0.7);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: all 0.2s;
+            padding: 20px;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-box {
+            background: #1a1f1a; border: 1.5px solid var(--border);
+            border-radius: 14px; padding: 24px; max-width: 300px; width: 100%;
+            text-align: center;
+        }
+        .modal-text {
+            font-size: 0.9rem; color: rgba(255,255,255,0.8);
+            line-height: 1.5; margin-bottom: 20px;
+        }
+        .modal-buttons {
+            display: flex; gap: 10px; justify-content: center;
+        }
+        .modal-btn {
+            padding: 8px 20px; border-radius: 8px;
+            font-family: 'Sono', sans-serif; font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; border: 1.5px solid var(--border);
+            background: var(--surface); color: #6ee7b7; transition: all 0.2s;
+        }
+        .modal-btn:active { background: rgba(16,185,129,0.15); }
+        .modal-btn.primary {
+            background: var(--green); color: white; border-color: var(--green);
+        }
+        .modal-btn.danger {
+            background: rgba(227,57,11,0.15); color: var(--red); border-color: rgba(227,57,11,0.3);
+        }
+
+        /* ===== PIN BADGE ===== */
+        .pin-badge {
+            position: absolute; top: 4px; right: 4px;
+            font-size: 0.6rem; z-index: 2;
+        }
+        .pinned-section-header {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 8px; padding-left: 2px;
+            font-size: 0.65rem; font-weight: 700; color: rgba(255,255,255,0.5);
+            letter-spacing: 0.5px; text-transform: uppercase;
+        }
+
+        /* ===== LEVEL BADGES ===== */
+        .level-badge {
+            position: absolute; top: 4px; left: 4px;
+            background: rgba(0,0,0,0.7); color: #6ee7b7;
+            font-size: 0.5rem; font-weight: 700;
+            padding: 1px 5px; border-radius: 4px;
+            letter-spacing: 0.3px; border: 1px solid rgba(110,231,183,0.3);
+        }
+        .evolution-badge {
+            position: absolute; bottom: 18px; right: 4px;
+            color: #f59e0b; font-size: 0.55rem; font-weight: 800;
+            text-shadow: 0 0 6px rgba(245,158,11,0.6);
+        }
+        .detail-level {
+            margin-top: 8px; display: flex; align-items: center; gap: 10px;
+        }
+        .detail-level-text {
+            font-size: 0.8rem; font-weight: 700; color: #6ee7b7;
+        }
+        .xp-bar-outer {
+            flex: 1; height: 8px; border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+            overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .xp-bar-inner {
+            height: 100%; border-radius: 3px;
+            background: linear-gradient(90deg, #22c55e, #6ee7b7);
+            transition: width 0.6s ease-out;
+        }
+        .xp-text {
+            font-size: 0.6rem; color: rgba(255,255,255,0.35);
+        }
+        .level-up-text {
+            color: #f59e0b; font-size: 1.2rem; font-weight: 800;
+            text-shadow: 0 0 15px rgba(245,158,11,0.8);
+            animation: levelUpPop 0.8s ease-out;
+            text-align: center; margin-top: 8px;
+        }
+        @keyframes levelUpPop {
+            0%   { opacity: 0; transform: scale(0.5) translateY(10px); }
+            50%  { opacity: 1; transform: scale(1.2) translateY(-5px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* ===== EGG INCUBATION ===== */
+        .egg-timer {
+            font-size: 0.55rem; font-weight: 700; color: #6ee7b7;
+            margin-top: 2px; letter-spacing: 0.5px;
+        }
+        .egg-timer.ready { color: #f59e0b; }
+        .egg-card.locked { opacity: 0.6; }
+        .egg-card.locked img { filter: saturate(0.4) brightness(0.7); }
+
+        /* Warming overlay */
+        .warm-overlay {
+            position: fixed; inset: 0; z-index: 310;
+            background: rgba(0,0,0,0.92);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 16px; opacity: 0; visibility: hidden; transition: all 0.3s;
+        }
+        .warm-overlay.active { opacity: 1; visibility: visible; }
+        .warm-title {
+            font-size: 1rem; font-weight: 700; color: white;
+            letter-spacing: 1px;
+        }
+        .warm-egg-img {
+            width: 100px; height: 130px; object-fit: contain;
+            transition: transform 0.1s;
+            filter: drop-shadow(0 3px 12px var(--green-glow));
+        }
+        .warm-egg-img.tap { transform: scale(0.9) rotate(-3deg); }
+        .warm-egg-img.overheat { filter: drop-shadow(0 3px 20px rgba(239,68,68,0.8)) !important; }
+        .warm-gauge-outer {
+            width: 200px; height: 14px; border-radius: 7px;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+            overflow: hidden;
+        }
+        .warm-gauge-inner {
+            height: 100%; border-radius: 6px;
+            background: linear-gradient(90deg, #22c55e, #6ee7b7);
+            transition: width 0.3s, background 0.3s;
+            width: 0%;
+        }
+        .warm-gauge-inner.overheat {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+        .warm-countdown {
+            font-size: 1.5rem; font-weight: 800; color: #6ee7b7;
+            letter-spacing: 2px;
+        }
+        .warm-hint {
+            font-size: 0.75rem; color: rgba(255,255,255,0.4);
+        }
+        .warm-hint.overheat { color: #ef4444; }
+        .warm-close {
+            margin-top: 12px; background: rgba(255,255,255,0.08);
+            border: 1.5px solid rgba(255,255,255,0.25);
+            color: white; padding: 8px 24px; border-radius: 10px;
+            font-family: 'Sono', sans-serif; font-size: 0.85rem; cursor: pointer;
+        }
+
+        /* ===== DRAGON RELEASE ===== */
+        .release-anim {
+            animation: releaseFloat 1.5s ease-in forwards;
+        }
+        @keyframes releaseFloat {
+            0%   { transform: scale(1) translateY(0); opacity: 1; filter: brightness(1); }
+            40%  { transform: scale(0.9) translateY(-30px); opacity: 0.9; filter: brightness(1.3) drop-shadow(0 0 15px rgba(110,231,183,0.6)); }
+            100% { transform: scale(0.3) translateY(-200px); opacity: 0; filter: brightness(2) drop-shadow(0 0 30px rgba(110,231,183,0.8)); }
+        }
+        .release-particle {
+            position: absolute; width: 6px; height: 6px;
+            border-radius: 50%; background: #6ee7b7;
+            pointer-events: none;
+            animation: releaseParticleDrift 1.2s ease-out forwards;
+        }
+        @keyframes releaseParticleDrift {
+            0%   { transform: translate(0,0) scale(1); opacity: 0.9; }
+            100% { transform: translate(var(--rx), var(--ry)) scale(0); opacity: 0; }
+        }
+        .release-text {
+            position: absolute; top: 35%; left: 50%; transform: translateX(-50%);
+            font-size: 1rem; font-weight: 700; color: #6ee7b7;
+            letter-spacing: 2px; opacity: 0; pointer-events: none;
+            animation: releaseTextFade 1.5s ease-out 0.5s forwards;
+        }
+        @keyframes releaseTextFade {
+            0%   { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            30%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        }
+
+        /* ===== PORTAL TRANSITION ===== */
+        .portal-transition {
+            position: fixed; inset: 0; z-index: 450;
+            background: #0a0a14;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden;
+            overflow: hidden;
+        }
+        .portal-transition.active { opacity: 1; visibility: visible; }
+        .portal-transition.fade-out { opacity: 0; transition: opacity 0.5s; }
+        .portal-vortex {
+            width: 120px; height: 120px;
+            animation: portalGrow 2s ease-in forwards, portalSpin 1.5s linear infinite;
+            filter: drop-shadow(0 0 30px rgba(124,58,237,0.8)) drop-shadow(0 0 60px rgba(124,58,237,0.4));
+        }
+        @keyframes portalGrow {
+            0%   { width: 120px; height: 120px; }
+            100% { width: 220vmax; height: 220vmax; }
+        }
+        @keyframes portalSpin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+        .portal-rings {
+            position: absolute; pointer-events: none;
+        }
+        .portal-ring {
+            position: absolute; border-radius: 50%;
+            border: 2px solid rgba(167,139,250,0.5);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            animation: portalRingExpand 1.5s ease-out forwards;
+            box-shadow: 0 0 12px rgba(124,58,237,0.4), inset 0 0 12px rgba(124,58,237,0.2);
+        }
+        @keyframes portalRingExpand {
+            0%   { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+        .portal-text {
+            position: absolute; bottom: 20%;
+            font-size: 0.85rem; font-weight: 700;
+            color: rgba(200,180,255,0.7); letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: portalTextPulse 1s ease-in-out infinite;
+        }
+        @keyframes portalTextPulse {
+            0%, 100% { opacity: 0.5; }
+            50%      { opacity: 1; }
+        }
+        .portal-particles {
+            position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+        }
+        .portal-particle {
+            position: absolute; width: 4px; height: 4px;
+            border-radius: 50%; background: rgba(167,139,250,0.8);
+            animation: portalParticleDrift 2s ease-in infinite;
+        }
+        @keyframes portalParticleDrift {
+            0%   { transform: translateY(0) scale(1); opacity: 0.8; }
+            100% { transform: translateY(-300px) scale(0); opacity: 0; }
+        }
+
+        /* ===== TURN INDICATOR ===== */
+        .turn-indicator {
+            position: absolute; z-index: 12;
+            width: 8px; height: 8px; border-radius: 50%;
+            pointer-events: none; opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .turn-indicator.active { opacity: 1; }
+        .turn-indicator.player {
+            bottom: 11%; left: 3%;
+            background: #6ee7b7;
+            box-shadow: 0 0 8px var(--green-glow), 0 0 16px var(--green-glow);
+        }
+        .turn-indicator.enemy {
+            top: 7%; right: 3%;
+            background: #f59e0b;
+            box-shadow: 0 0 8px rgba(245,158,11,0.5), 0 0 16px rgba(245,158,11,0.4);
+        }
+
+        /* ===== QTE (BATTLE) ===== */
+        .qte-container {
+            position: absolute; inset: 0; z-index: 30;
+            background: rgba(0,0,0,0.5);
+            -webkit-user-select: none; user-select: none;
+        }
+        .qte-ring-wrap {
+            position: absolute;
+            display: flex; flex-direction: column; align-items: center;
+            transform: translate(-50%, -50%);
+            transition: none;
+        }
+        .qte-ring {
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .qte-target {
+            border-radius: 50%;
+            border: 3px solid var(--green);
+            position: absolute;
+            box-shadow: 0 0 10px var(--green-glow), inset 0 0 10px var(--green-glow);
+        }
+        .qte-shrink {
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.8);
+            position: absolute;
+            box-shadow: 0 0 8px rgba(255,255,255,0.3);
+        }
+        .qte-label {
+            font-size: 1.1rem; font-weight: 800; color: white;
+            margin-top: 16px; letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        .qte-result-text {
+            font-size: 1.8rem; font-weight: 800; margin-top: 8px;
+            min-height: 2.2rem;
+        }
+        .qte-result-text.perfect { color: #f59e0b; text-shadow: 0 0 20px rgba(245,158,11,0.8); }
+        .qte-result-text.good { color: #22c55e; text-shadow: 0 0 12px rgba(34,197,94,0.6); }
+        .qte-result-text.miss { color: #ef4444; text-shadow: 0 0 12px rgba(239,68,68,0.6); }
+
+        /* ===== DRAGON EVOLUTION ===== */
+        .detail-evolve-btn {
+            margin-top: 12px; padding: 10px 24px;
+            background: rgba(245,158,11,0.1); border: 1.5px solid rgba(245,158,11,0.3);
+            border-radius: 10px; color: #f59e0b;
+            font-family: 'Sono', sans-serif; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px; justify-content: center;
+            width: 100%; max-width: 350px;
+        }
+        .detail-evolve-btn:active { background: rgba(245,158,11,0.2); }
+        .detail-evolve-btn.disabled {
+            opacity: 0.3; pointer-events: none;
+        }
+        .evolving {
+            animation: evolutionGlow 1.5s ease-in-out infinite;
+        }
+        @keyframes evolutionGlow {
+            0%, 100% { filter: brightness(1) drop-shadow(0 0 0px transparent); }
+            50%      { filter: brightness(2) drop-shadow(0 0 30px rgba(245,158,11,0.8)); }
+        }
+        .evolution-reveal {
+            animation: evolutionReveal 0.8s ease-out;
+        }
+        @keyframes evolutionReveal {
+            0%   { filter: brightness(3) saturate(0); transform: scale(1.1); }
+            50%  { filter: brightness(1.5) saturate(1.5); transform: scale(1.05); }
+            100% { filter: brightness(1) saturate(1); transform: scale(1); }
+        }
+        .evolution-flash {
+            position: fixed; inset: 0; z-index: 201;
+            background: radial-gradient(circle, rgba(245,158,11,0.6) 0%, transparent 70%);
+            animation: evoFlash 0.8s ease-out forwards;
+            pointer-events: none;
+        }
+        @keyframes evoFlash {
+            0%   { opacity: 0; }
+            30%  { opacity: 1; }
+            100% { opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -1005,7 +1372,7 @@
         <img class="breed-egg-icon" src="/static/assets/egg1.png">
     </div>
     <button class="breed-action-btn" id="breedBtn">Breed!</button>
-    <button class="breed-action-btn ready" id="breedScanBtn" style="background:var(--green);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;">
+    <button class="breed-action-btn" id="breedScanBtn" style="background:rgba(227,57,11,0.4);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;">
         <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor;"><path d="M4 4h6v6H4V4zm2 2v2h2V6H6zm8-2h6v6h-6V4zm2 2v2h2V6h-2zM4 14h6v6H4v-6zm2 2v2h2v-2H6zm10-1h1v1h-1v-1zm-2-1h1v1h-1v-1zm4 0h1v1h-1v-1zm-2 2h1v1h-1v-1zm2 2h1v1h-1v-1zm-4 0h1v1h-1v-1zm0 2h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1z"/></svg>
         Scan Friend's Dragon to Breed
     </button>
@@ -1025,10 +1392,10 @@
         <div class="battle-stat-row"><span class="battle-stat-label">SPD</span><span class="battle-stat-value" id="bpSPD">-</span></div>
         <div class="battle-stat-row" style="border-top:1px solid var(--border);margin-top:4px;padding-top:6px;"><span class="battle-stat-label">Power</span><span class="battle-stat-value" id="bpPower">-</span></div>
     </div>
-    <button class="battle-start-btn" id="battleStartBtn">Fight!</button>
-    <button class="battle-start-btn ready" id="battleScanBtn" style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;">
+    <button class="battle-start-btn" id="battleStartBtn">Train!</button>
+    <button class="battle-start-btn" id="battleScanBtn" style="background:rgba(124,58,237,0.4);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;">
         <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor;"><path d="M4 4h6v6H4V4zm2 2v2h2V6H6zm8-2h6v6h-6V4zm2 2v2h2V6h-2zM4 14h6v6H4v-6zm2 2v2h2v-2H6zm10-1h1v1h-1v-1zm-2-1h1v1h-1v-1zm4 0h1v1h-1v-1zm-2 2h1v1h-1v-1zm2 2h1v1h-1v-1zm-4 0h1v1h-1v-1zm0 2h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1z"/></svg>
-        Scan Friend's Dragon to Battle
+        Scan Friend's Dragon to Fight
     </button>
     <div class="battle-picker-grid" id="battlePickerGrid"></div>
 </div>
@@ -1055,7 +1422,7 @@
     </button>
     <button class="nav-item" data-page="pageBattle">
         <div class="nav-icon-wrap">
-            <img src="/static/assets/icon.png">
+            <img src="/static/assets/battle.png">
         </div>
         <span>Battle</span>
     </button>
@@ -1076,6 +1443,8 @@
         <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4V4zm2 2v2h2V6H6zm8-2h6v6h-6V4zm2 2v2h2V6h-2zM4 14h6v6H4v-6zm2 2v2h2v-2H6zm10-1h1v1h-1v-1zm-2-1h1v1h-1v-1zm4 0h1v1h-1v-1zm-2 2h1v1h-1v-1zm2 2h1v1h-1v-1zm-4 0h1v1h-1v-1zm0 2h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1z"/></svg>
         Share QR
     </button>
+    <div class="detail-level" id="detailLevel"></div>
+    <button class="detail-evolve-btn disabled" id="detailEvolveBtn" style="display:none;">Evolve</button>
     <div class="detail-lineage" id="detailLineage"></div>
     <button class="detail-share-btn" id="detailDeleteBtn" style="margin-top:16px;color:var(--red);border-color:rgba(227,57,11,0.3);">
         Release Dragon
@@ -1099,6 +1468,24 @@
     <div class="scan-status" id="scanStatus">Point camera at QR code</div>
 </div>
 
+<!-- Modal dialog -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+        <div class="modal-text" id="modalText"></div>
+        <div class="modal-buttons" id="modalButtons"></div>
+    </div>
+</div>
+
+<!-- Warming minigame overlay -->
+<div class="warm-overlay" id="warmOverlay">
+    <div class="warm-title">Warm your egg!</div>
+    <img class="warm-egg-img" id="warmEggImg" src="/static/assets/egg1.png">
+    <div class="warm-gauge-outer"><div class="warm-gauge-inner" id="warmGauge"></div></div>
+    <div class="warm-countdown" id="warmCountdown">--:--</div>
+    <div class="warm-hint" id="warmHint">Tap the egg to warm it up!</div>
+    <button class="warm-close" id="warmClose">Close</button>
+</div>
+
 <!-- Hatch overlay -->
 <div class="hatch-overlay" id="hatchOverlay">
     <div class="hatch-egg" id="hatchEgg"><img src="/static/assets/egg1.png" id="hatchEggImg"></div>
@@ -1112,6 +1499,14 @@
         </div>
     </div>
     <button class="hatch-continue" id="hatchContinue">Continue</button>
+</div>
+
+<!-- Portal transition -->
+<div class="portal-transition" id="portalTransition">
+    <div class="portal-particles" id="portalParticles"></div>
+    <div class="portal-rings" id="portalRings"></div>
+    <img class="portal-vortex" id="portalVortex" src="/static/assets/battle.png">
+    <div class="portal-text" id="portalText">Entering the rift...</div>
 </div>
 
 <!-- Battle arena overlay -->
@@ -1139,6 +1534,19 @@
         <!-- Stat cards -->
         <div class="battle-stat-bars left" id="battleEnemyStats"></div>
         <div class="battle-stat-bars" id="battlePlayerStats"></div>
+        <!-- Turn indicator -->
+        <div class="turn-indicator" id="turnIndicator"></div>
+        <!-- QTE overlay -->
+        <div class="qte-container" id="qteContainer" style="display:none;">
+            <div class="qte-ring-wrap" id="qteRingWrap">
+                <div class="qte-ring" id="qteRing">
+                    <div class="qte-target" id="qteTarget"></div>
+                    <div class="qte-shrink" id="qteShrink"></div>
+                </div>
+                <div class="qte-label" id="qteLabel">TAP!</div>
+                <div class="qte-result-text" id="qteResultText"></div>
+            </div>
+        </div>
         <!-- Result -->
         <div class="battle-result" id="battleResult">
             <div class="battle-result-title" id="battleResultTitle"></div>
@@ -1150,6 +1558,49 @@
 </div>
 
 <script>
+    // ===== Modal Dialog =====
+    function showModal(text, buttons) {
+        const overlay = document.getElementById('modalOverlay');
+        document.getElementById('modalText').textContent = text;
+        const btnContainer = document.getElementById('modalButtons');
+        btnContainer.innerHTML = '';
+        buttons.forEach(b => {
+            const btn = document.createElement('button');
+            btn.className = 'modal-btn' + (b.cls ? ' ' + b.cls : '');
+            btn.textContent = b.label;
+            btn.addEventListener('click', () => {
+                overlay.classList.remove('active');
+                if (b.action) b.action();
+            });
+            btnContainer.appendChild(btn);
+        });
+        overlay.classList.add('active');
+    }
+
+    function showAlert(text) {
+        return new Promise(resolve => {
+            showModal(text, [{ label: 'OK', cls: 'primary', action: resolve }]);
+        });
+    }
+
+    function showConfirm(text) {
+        return new Promise(resolve => {
+            showModal(text, [
+                { label: 'Cancel', action: () => resolve(false) },
+                { label: 'Confirm', cls: 'primary', action: () => resolve(true) }
+            ]);
+        });
+    }
+
+    function showConfirmDanger(text) {
+        return new Promise(resolve => {
+            showModal(text, [
+                { label: 'Cancel', action: () => resolve(false) },
+                { label: 'Confirm', cls: 'danger', action: () => resolve(true) }
+            ]);
+        });
+    }
+
     // ===== Auth & State =====
     let token = localStorage.getItem('dyno_token');
     let currentUser = localStorage.getItem('dyno_username') || '';
@@ -1159,6 +1610,37 @@
     let selected = [];   // dragon ids for breeding tab
     let hatching = false;
     let hatchedDragonPending = null;
+
+    // Pinned dragons (stored per-user in localStorage)
+    function getPinned() {
+        try { return JSON.parse(localStorage.getItem('dyno_pinned_' + currentUser) || '[]'); } catch { return []; }
+    }
+    function setPinned(ids) {
+        localStorage.setItem('dyno_pinned_' + currentUser, JSON.stringify(ids));
+    }
+    function togglePin(dragonId) {
+        const pinned = getPinned();
+        const idx = pinned.indexOf(dragonId);
+        if (idx >= 0) pinned.splice(idx, 1);
+        else pinned.push(dragonId);
+        setPinned(pinned);
+    }
+    function isPinned(dragonId) {
+        return getPinned().includes(dragonId);
+    }
+
+    // Long-press helper: calls onLong after 500ms hold, onClick for short taps
+    function addLongPress(el, onClick, onLong) {
+        let timer = null, didLong = false;
+        el.addEventListener('touchstart', () => { didLong = false; timer = setTimeout(() => { didLong = true; onLong(); }, 500); }, { passive: true });
+        el.addEventListener('touchend', (e) => { clearTimeout(timer); });
+        el.addEventListener('touchcancel', () => { clearTimeout(timer); didLong = false; });
+        el.addEventListener('mousedown', () => { didLong = false; timer = setTimeout(() => { didLong = true; onLong(); }, 500); });
+        el.addEventListener('mouseup', () => { clearTimeout(timer); });
+        el.addEventListener('mouseleave', () => { clearTimeout(timer); });
+        el.addEventListener('click', (e) => { if (!didLong) onClick(); });
+        el.addEventListener('contextmenu', e => e.preventDefault());
+    }
 
     async function authFetch(url, options = {}) {
         if (!options.headers) options.headers = {};
@@ -1224,8 +1706,8 @@
         }
     }
 
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        if (!confirm('Logout?')) return;
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (!await showConfirm('Logout?')) return;
         token = null;
         currentUser = '';
         localStorage.removeItem('dyno_token');
@@ -1329,6 +1811,7 @@
         for (let i = 0; i < latent.length; i++) sumSq += latent[i] * latent[i];
         const norm = Math.sqrt(sumSq);
         const sigma = Math.abs(norm - EXPECTED_NORM) / NORM_STD;
+        if (sigma >= 3.5) return { tier: 'mythic',    label: 'Mythic',    norm, sigma };
         if (sigma >= 2.5) return { tier: 'legendary', label: 'Legendary', norm, sigma };
         if (sigma >= 2.0) return { tier: 'epic',      label: 'Epic',      norm, sigma };
         if (sigma >= 1.5) return { tier: 'rare',       label: 'Rare',      norm, sigma };
@@ -1342,9 +1825,10 @@
     }
 
     // ===== Battle stats =====
-    const RARITY_STAT_BONUS = { common: 1.0, uncommon: 1.20, rare: 1.45, epic: 1.75, legendary: 2.10 };
+    const RARITY_STAT_BONUS = { common: 1.0, uncommon: 1.20, rare: 1.45, epic: 1.75, legendary: 2.10, mythic: 2.60 };
 
-    function computeStats(latent) {
+    function computeStats(latent, level) {
+        level = level || 1;
         const chunkSize = 256;
         const names = ['hp', 'atk', 'def', 'spd'];
         const raw = {};
@@ -1355,11 +1839,12 @@
         }
         const rarity = computeRarity(latent);
         const b = RARITY_STAT_BONUS[rarity.tier];
+        const lvlMul = 1 + (level - 1) * 0.02;
         return {
-            hp:  Math.round((80 + raw.hp * 120) * b),
-            atk: Math.round((10 + raw.atk * 40) * b),
-            def: Math.round((5 + raw.def * 30) * b),
-            spd: Math.round((10 + raw.spd * 40) * b),
+            hp:  Math.round((80 + raw.hp * 120) * b * lvlMul),
+            atk: Math.round((10 + raw.atk * 40) * b * lvlMul),
+            def: Math.round((5 + raw.def * 30) * b * lvlMul),
+            spd: Math.round((10 + raw.spd * 40) * b * lvlMul),
             get power() { return this.hp + this.atk + this.def + this.spd; },
             rarity
         };
@@ -1503,7 +1988,8 @@
                                 latent,
                                 parent1_id: null,
                                 parent2_id: null,
-                                received: true
+                                received: true,
+                                xp: 0, level: 1, evolution: 0
                             };
                             imageCache.set(dragon.id, data.image);
                             overlay.classList.remove('active');
@@ -1594,11 +2080,14 @@
     }
 
     function stopQRScan() {
+        document.getElementById('scanOverlay').classList.remove('active');
         if (html5QrScanner) {
-            html5QrScanner.stop().catch(() => {});
+            try { html5QrScanner.stop().catch(() => {}); } catch (e) {}
             html5QrScanner = null;
         }
-        document.getElementById('scanOverlay').classList.remove('active');
+        // Clear the scanner container so stale UI doesn't persist
+        const reader = document.getElementById('scanReader');
+        if (reader) reader.innerHTML = '';
     }
 
     // QR overlay close
@@ -1637,16 +2126,17 @@
 
     // Battle friend's dragon via QR
     document.getElementById('battleScanBtn').addEventListener('click', () => {
-        if (battleSelected < 0 || !dragons[battleSelected]) {
-            alert('Select your champion first, then scan your friend\'s dragon!');
+        const champDragon = battleSelected >= 0 ? dragons.find(d => d.id === battleSelected) : null;
+        if (!champDragon) {
+            showAlert('Select your champion first, then scan your friend\'s dragon!');
             return;
         }
         scanDragonQRTemp(async (dragon) => {
             if (battling) return;
             battling = true;
 
-            const playerDragon = dragons[battleSelected];
-            const pStats = computeStats(playerDragon.latent);
+            const playerDragon = champDragon;
+            const pStats = computeStats(playerDragon.latent, playerDragon.level || 1);
             const oStats = computeStats(dragon.latent);
 
             const overlay = document.getElementById('battleOverlay');
@@ -1662,6 +2152,7 @@
             document.getElementById('battleEnemyHpBar').classList.remove('yellow', 'red');
 
             overlay.classList.add('active');
+            await playPortalTransition('Opening the rift...');
 
             const oppName = dragon.name.split(' ')[0];
             await runBattle(playerDragon, pStats, { latent: dragon.latent, image: dragon.imgSrc }, oStats, oppName, true);
@@ -1683,7 +2174,7 @@
     // ===== Render all =====
     function render() {
         document.getElementById('eggStat').textContent = eggs.length;
-        document.getElementById('dragonStat').textContent = dragons.length;
+        document.getElementById('dragonStat').textContent = dragons.length + '/' + MAX_DRAGONS;
         renderEggsTab();
         renderDragonsTab();
         renderBreedTab();
@@ -1691,6 +2182,39 @@
     }
 
     // ===== EGGS TAB =====
+    let eggTimerInterval = null;
+
+    function getEggRemainingMs(egg) {
+        if (!egg.hatch_ready_at) return 0;
+        return new Date(egg.hatch_ready_at + 'Z') - Date.now();
+    }
+
+    function formatTimer(ms) {
+        if (ms <= 0) return 'Ready!';
+        const min = Math.floor(ms / 60000);
+        const sec = Math.floor((ms % 60000) / 1000);
+        return min + ':' + String(sec).padStart(2, '0');
+    }
+
+    function startEggTimers() {
+        if (eggTimerInterval) clearInterval(eggTimerInterval);
+        eggTimerInterval = setInterval(() => {
+            document.querySelectorAll('.egg-timer').forEach(el => {
+                const readyAt = el.dataset.readyAt;
+                if (!readyAt) { el.textContent = 'Ready!'; el.classList.add('ready'); return; }
+                const ms = new Date(readyAt + 'Z') - Date.now();
+                if (ms <= 0) {
+                    el.textContent = 'Ready!';
+                    el.classList.add('ready');
+                    const card = el.closest('.egg-card');
+                    if (card) card.classList.remove('locked');
+                } else {
+                    el.textContent = formatTimer(ms);
+                }
+            });
+        }, 1000);
+    }
+
     function renderEggsTab() {
         const grid = document.getElementById('eggsGrid');
         grid.innerHTML = '';
@@ -1700,17 +2224,92 @@
         }
         eggs.forEach((egg) => {
             const card = document.createElement('div');
-            card.className = 'egg-card' + (egg.type === 'bred' ? ' bred' : '');
-            const label = egg.type === 'bred' ? 'Bred' : 'Wild';
-            card.innerHTML = '<img src="/static/assets/egg1.png"><div class="egg-label">' + label + '</div>';
+            const remainMs = getEggRemainingMs(egg);
+            const isReady = remainMs <= 0;
+            const isGolden = egg.type === 'golden';
+            card.className = 'egg-card' + (egg.type === 'bred' ? ' bred' : '') + (isGolden ? ' golden' : '') + (isReady ? '' : ' locked');
+            const label = isGolden ? 'Golden' : egg.type === 'bred' ? 'Bred' : 'Wild';
+            const eggImg = isGolden ? '/static/assets/goldegg.png' : '/static/assets/egg1.png';
+            const timerText = isReady ? 'Ready!' : formatTimer(remainMs);
+            const timerClass = 'egg-timer' + (isReady ? ' ready' : '');
+            card.innerHTML = '<img src="' + eggImg + '"><div class="egg-label">' + label + '</div>'
+                + '<div class="' + timerClass + '" data-ready-at="' + (egg.hatch_ready_at || '') + '">' + timerText + '</div>';
             card.addEventListener('click', () => hatchEgg(egg.id));
             grid.appendChild(card);
         });
+        startEggTimers();
     }
 
     // ===== DRAGONS TAB =====
-    const RARITY_ORDER = ['legendary', 'epic', 'rare', 'uncommon', 'common'];
-    const RARITY_LABELS = { legendary: 'Legendary', epic: 'Epic', rare: 'Rare', uncommon: 'Uncommon', common: 'Common' };
+    const RARITY_ORDER = ['mythic', 'legendary', 'epic', 'rare', 'uncommon', 'common'];
+    const RARITY_LABELS = { mythic: 'Mythic', legendary: 'Legendary', epic: 'Epic', rare: 'Rare', uncommon: 'Uncommon', common: 'Common' };
+
+    // Build a dragon card element. onClick for tap, long-press toggles pin.
+    function makeDragonCard(d, { isSelected, extraBadge, onClick } = {}) {
+        const card = document.createElement('div');
+        card.className = 'dragon-card' + (isSelected ? ' selected' : '');
+        const shortName = d.name.split(' ')[0];
+        const imgSrc = getDragonImg(d);
+        const lvl = d.level || 1;
+        const evo = d.evolution || 0;
+        const pinned = isPinned(d.id);
+        card.innerHTML = (imgSrc ? '<img src="' + imgSrc + '">' : '<div style="width:100%;height:100%;background:rgba(255,255,255,0.03);"></div>')
+            + '<div class="tag">' + shortName + '</div>'
+            + '<div class="level-badge">Lv.' + lvl + '</div>'
+            + (evo > 0 ? '<div class="evolution-badge">' + '\u2605'.repeat(evo) + '</div>' : '')
+            + (pinned ? '<div class="pin-badge">\uD83D\uDCCC</div>' : '')
+            + (extraBadge || '');
+        addLongPress(card, () => { if (onClick) onClick(d); }, () => {
+            togglePin(d.id);
+            render();
+        });
+        return card;
+    }
+
+    // Render pinned section + rarity-grouped sections into a container
+    function renderDragonSections(container, dragonList, cardOpts) {
+        const pinned = getPinned();
+        const pinnedDragons = dragonList.filter(d => pinned.includes(d.id));
+        const unpinned = dragonList.filter(d => !pinned.includes(d.id));
+
+        // Pinned section
+        if (pinnedDragons.length) {
+            const section = document.createElement('div');
+            section.className = 'rarity-section';
+            const header = document.createElement('div');
+            header.className = 'pinned-section-header';
+            header.textContent = '\uD83D\uDCCC Pinned';
+            section.appendChild(header);
+            const grid = document.createElement('div');
+            grid.className = 'dragon-grid';
+            pinnedDragons.forEach(d => grid.appendChild(makeDragonCard(d, typeof cardOpts === 'function' ? cardOpts(d) : cardOpts)));
+            section.appendChild(grid);
+            container.appendChild(section);
+        }
+
+        // Rarity groups (unpinned only)
+        const groups = {};
+        unpinned.forEach(d => {
+            const tier = computeRarity(d.latent).tier;
+            if (!groups[tier]) groups[tier] = [];
+            groups[tier].push(d);
+        });
+        RARITY_ORDER.forEach(tier => {
+            if (!groups[tier] || !groups[tier].length) return;
+            const section = document.createElement('div');
+            section.className = 'rarity-section';
+            const header = document.createElement('div');
+            header.className = 'rarity-section-header';
+            header.innerHTML = '<span class="rarity-badge rarity-' + tier + '">' + RARITY_LABELS[tier] + '</span>'
+                + '<span class="rarity-section-count">' + groups[tier].length + '</span>';
+            section.appendChild(header);
+            const grid = document.createElement('div');
+            grid.className = 'dragon-grid';
+            groups[tier].forEach(d => grid.appendChild(makeDragonCard(d, typeof cardOpts === 'function' ? cardOpts(d) : cardOpts)));
+            section.appendChild(grid);
+            container.appendChild(section);
+        });
+    }
 
     function renderDragonsTab() {
         const container = document.getElementById('dragonsGrid');
@@ -1719,41 +2318,10 @@
             container.innerHTML = '<div class="empty-state">Hatch an egg to get your first dragon!</div>';
             return;
         }
-
-        const groups = {};
-        dragons.forEach(d => {
-            const r = computeRarity(d.latent);
-            if (!groups[r.tier]) groups[r.tier] = [];
-            groups[r.tier].push(d);
-        });
-
-        RARITY_ORDER.forEach(tier => {
-            if (!groups[tier] || !groups[tier].length) return;
-            const section = document.createElement('div');
-            section.className = 'rarity-section';
-
-            const header = document.createElement('div');
-            header.className = 'rarity-section-header';
-            header.innerHTML = '<span class="rarity-badge rarity-' + tier + '">' + RARITY_LABELS[tier] + '</span>'
-                + '<span class="rarity-section-count">' + groups[tier].length + '</span>';
-            section.appendChild(header);
-
-            const grid = document.createElement('div');
-            grid.className = 'dragon-grid';
-            groups[tier].forEach(d => {
-                const card = document.createElement('div');
-                card.className = 'dragon-card';
-                const shortName = d.name.split(' ')[0];
-                const imgSrc = getDragonImg(d);
-                card.innerHTML = (imgSrc ? '<img src="' + imgSrc + '">' : '<div style="width:100%;height:100%;background:rgba(255,255,255,0.03);"></div>')
-                    + '<div class="tag">' + shortName + '</div>'
-                    + (d.received ? '<div class="received-badge">Received</div>' : '');
-                card.addEventListener('click', () => showDetail(d));
-                grid.appendChild(card);
-            });
-            section.appendChild(grid);
-            container.appendChild(section);
-        });
+        renderDragonSections(container, dragons, (d) => ({
+            extraBadge: d.received ? '<div class="received-badge">Received</div>' : '',
+            onClick: () => showDetail(d)
+        }));
     }
 
     // ===== DRAGON DETAIL =====
@@ -1771,7 +2339,35 @@
         rarityDiv.innerHTML = '<span class="rarity-badge rarity-' + r.tier + '">' + r.label + '</span>'
             + '<span class="detail-rarity-score">' + r.sigma.toFixed(1) + 'σ from mean</span>';
 
-        const s = computeStats(dragon.latent);
+        // Level & XP display
+        const lvl = dragon.level || 1;
+        const xp = dragon.xp || 0;
+        const xpNeeded = lvl * 100;
+        const xpPct = lvl >= 20 ? 100 : Math.min(100, Math.round(xp / xpNeeded * 100));
+        const levelDiv = document.getElementById('detailLevel');
+        levelDiv.innerHTML = '<span class="detail-level-text">Lv.' + lvl + (lvl >= 20 ? ' MAX' : '') + '</span>'
+            + '<div class="xp-bar-outer"><div class="xp-bar-inner" style="width:' + xpPct + '%"></div></div>'
+            + '<span class="xp-text">' + (lvl >= 20 ? 'MAX' : xp + '/' + xpNeeded + ' XP') + '</span>';
+
+        // Evolution button
+        const evo = dragon.evolution || 0;
+        const evolveBtn = document.getElementById('detailEvolveBtn');
+        const requiredLevel = 10 * (evo + 1);
+        if (evo >= 2) {
+            evolveBtn.style.display = 'flex';
+            evolveBtn.textContent = '\u2605\u2605 Fully Evolved';
+            evolveBtn.className = 'detail-evolve-btn disabled';
+        } else if (lvl >= requiredLevel) {
+            evolveBtn.style.display = 'flex';
+            evolveBtn.textContent = '\u2605 Evolve! (Lv.' + requiredLevel + '+)';
+            evolveBtn.className = 'detail-evolve-btn';
+        } else {
+            evolveBtn.style.display = 'flex';
+            evolveBtn.textContent = 'Evolve at Lv.' + requiredLevel;
+            evolveBtn.className = 'detail-evolve-btn disabled';
+        }
+
+        const s = computeStats(dragon.latent, lvl);
         document.getElementById('detailStats').innerHTML =
             '<div class="battle-stat-row"><span class="battle-stat-label">HP</span><span class="battle-stat-value">' + s.hp + '</span></div>'
             + '<div class="battle-stat-row"><span class="battle-stat-label">ATK</span><span class="battle-stat-value">' + s.atk + '</span></div>'
@@ -1798,7 +2394,7 @@
             lineageDiv.appendChild(row);
 
             const names = document.createElement('div');
-            names.style.cssText = 'display:flex;justify-content:space-around;margin-top:6px;font-size:0.7rem;color:rgba(255,255,255,0.4);';
+            names.style.cssText = 'display:flex;justify-content:center;gap:32px;margin-top:6px;font-size:0.7rem;color:rgba(255,255,255,0.4);';
             names.innerHTML = '<span>' + (p1 ? p1.name.split(' ')[0] : '?') + '</span><span>' + (p2 ? p2.name.split(' ')[0] : '?') + '</span>';
             lineageDiv.appendChild(names);
 
@@ -1885,14 +2481,49 @@
 
     document.getElementById('detailDeleteBtn').addEventListener('click', async () => {
         if (!detailDragon) return;
-        if (!confirm('Release ' + detailDragon.name + '? This cannot be undone.')) return;
+        if (!await showConfirmDanger('Release ' + detailDragon.name + '? This cannot be undone.')) return;
         try {
             await authFetch('/api/dragons/' + detailDragon.id, { method: 'DELETE' });
+
+            // Play release animation
+            const detailImg = document.getElementById('detailImg');
+            const overlay = document.getElementById('detailOverlay');
+
+            // Spawn particles from dragon image center
+            const imgRect = detailImg.getBoundingClientRect();
+            const cx = imgRect.left + imgRect.width / 2;
+            const cy = imgRect.top + imgRect.height / 2;
+            for (let i = 0; i < 16; i++) {
+                const p = document.createElement('div');
+                p.className = 'release-particle';
+                p.style.left = cx + 'px';
+                p.style.top = cy + 'px';
+                p.style.setProperty('--rx', (Math.random() * 160 - 80) + 'px');
+                p.style.setProperty('--ry', (-40 - Math.random() * 120) + 'px');
+                p.style.animationDelay = (Math.random() * 0.3) + 's';
+                p.style.background = Math.random() > 0.5 ? '#6ee7b7' : '#34d399';
+                document.body.appendChild(p);
+                setTimeout(() => p.remove(), 1600);
+            }
+
+            // Farewell text
+            const farewell = document.createElement('div');
+            farewell.className = 'release-text';
+            farewell.textContent = 'Farewell, ' + detailDragon.name.split(' ')[0] + '...';
+            overlay.appendChild(farewell);
+
+            // Float away animation on image
+            detailImg.classList.add('release-anim');
+
+            await sleep(1800);
+            farewell.remove();
+            detailImg.classList.remove('release-anim');
+
             const idx = dragons.findIndex(d => d.id === detailDragon.id);
             if (idx >= 0) dragons.splice(idx, 1);
             imageCache.delete(detailDragon.id);
             detailDragon = null;
-            document.getElementById('detailOverlay').classList.remove('active');
+            overlay.classList.remove('active');
             render();
         } catch (err) {
             console.error('Failed to release dragon:', err);
@@ -1914,24 +2545,17 @@
         if (!dragons.length) {
             grid.innerHTML = '<div class="empty-state">Hatch some dragons first!</div>';
         } else {
-            dragons.forEach((d) => {
-                const card = document.createElement('div');
-                card.className = 'breed-card' + (selected.includes(d.id) ? ' selected' : '');
-                const shortName = d.name.split(' ')[0];
-                const imgSrc = getDragonImg(d);
-                card.innerHTML = (imgSrc ? '<img src="' + imgSrc + '">' : '<div style="width:100%;height:100%;background:rgba(255,255,255,0.03);"></div>')
-                    + rarityBadgeHTML(d.latent)
-                    + '<div class="tag">' + shortName + '</div>';
-                card.addEventListener('click', () => {
+            renderDragonSections(grid, dragons, (d) => ({
+                isSelected: selected.includes(d.id),
+                onClick: () => {
                     scannedBreedDragon = null;
                     const pos = selected.indexOf(d.id);
                     if (pos >= 0) selected.splice(pos, 1);
                     else if (selected.length < 2) selected.push(d.id);
                     else { selected.shift(); selected.push(d.id); }
                     renderBreedTab();
-                });
-                grid.appendChild(card);
-            });
+                }
+            }));
         }
 
         const s1 = document.getElementById('bSlot1');
@@ -1956,6 +2580,7 @@
 
         const canBreed = scannedBreedDragon ? selected.length >= 1 : selected.length === 2;
         document.getElementById('breedBtn').classList.toggle('ready', canBreed);
+        document.getElementById('breedScanBtn').classList.toggle('ready', selected.length >= 1);
     }
 
     document.getElementById('breedBtn').addEventListener('click', async () => {
@@ -2015,7 +2640,8 @@
                 type: 'bred',
                 latent: data.latent,
                 parent1_id: d1.id,
-                parent2_id: hasScanned ? null : selected[1]
+                parent2_id: hasScanned ? null : selected[1],
+                hatch_ready_at: data.hatch_ready_at || null
             });
             selected = [];
             scannedBreedDragon = null;
@@ -2034,6 +2660,20 @@
     // ===== HATCHING =====
     async function hatchEgg(eggId) {
         if (hatching) return;
+        // Check dragon limit
+        if (dragons.length >= MAX_DRAGONS) {
+            showAlert('You can only have ' + MAX_DRAGONS + ' dragons! Release one to make room.');
+            return;
+        }
+        // Check if egg is ready
+        const egg = eggs.find(e => e.id === eggId);
+        if (egg) {
+            const ms = getEggRemainingMs(egg);
+            if (ms > 0) {
+                openWarmingMinigame(egg);
+                return;
+            }
+        }
         hatching = true;
         const overlay = document.getElementById('hatchOverlay');
         const eggEl = document.getElementById('hatchEgg');
@@ -2043,9 +2683,10 @@
         const resultImg = document.getElementById('hatchResultImg');
         const continueBtn = document.getElementById('hatchContinue');
 
+        const isGoldenEgg = egg && egg.type === 'golden';
         eggEl.className = 'hatch-egg';
         eggEl.style.display = '';
-        eggImg.src = '/static/assets/egg1.png';
+        eggImg.src = isGoldenEgg ? '/static/assets/goldegg.png' : '/static/assets/egg1.png';
         spinner.classList.remove('on');
         resultImg.src = '';
         result.style.transition = 'none';
@@ -2060,7 +2701,7 @@
         await sleep(1800);
         eggEl.classList.remove('shaking');
         eggEl.classList.add('cracking');
-        eggImg.src = '/static/assets/egg3.png';
+        eggImg.src = isGoldenEgg ? '/static/assets/goldegg_cracked.png' : '/static/assets/egg3.png';
         spinner.classList.add('on');
 
         try {
@@ -2094,7 +2735,8 @@
                 image: data.image,
                 parent1_id: data.parent1_id || null,
                 parent2_id: data.parent2_id || null,
-                received: false
+                received: false,
+                xp: 0, level: 1, evolution: 0
             };
 
             // Remove egg from local list
@@ -2124,7 +2766,8 @@
                 latent: hatchedDragonPending.latent,
                 parent1_id: hatchedDragonPending.parent1_id,
                 parent2_id: hatchedDragonPending.parent2_id,
-                received: false
+                received: false,
+                xp: 0, level: 1, evolution: 0
             });
             imageCache.set(hatchedDragonPending.id, hatchedDragonPending.image);
             hatchedDragonPending = null;
@@ -2167,7 +2810,7 @@
     // ===== Visual effect helpers =====
     const RARITY_PARTICLE_COLORS = {
         common: '#9ca3af', uncommon: '#34d399', rare: '#60a5fa',
-        epic: '#a78bfa', legendary: '#f59e0b'
+        epic: '#a78bfa', legendary: '#f59e0b', mythic: '#ef4444'
     };
 
     function spawnHatchParticles(color) {
@@ -2229,24 +2872,18 @@
             document.getElementById('battleStartBtn').classList.remove('ready');
             return;
         }
-        dragons.forEach((d, i) => {
-            const card = document.createElement('div');
-            card.className = 'battle-card' + (battleSelected === i ? ' selected' : '');
-            const shortName = d.name.split(' ')[0];
-            const imgSrc = getDragonImg(d);
-            card.innerHTML = (imgSrc ? '<img src="' + imgSrc + '">' : '<div style="width:100%;height:100%;background:rgba(255,255,255,0.03);"></div>')
-                + rarityBadgeHTML(d.latent)
-                + '<div class="tag">' + shortName + '</div>';
-            card.addEventListener('click', () => {
-                battleSelected = (battleSelected === i) ? -1 : i;
+        renderDragonSections(grid, dragons, (d) => ({
+            isSelected: battleSelected === d.id,
+            onClick: () => {
+                battleSelected = (battleSelected === d.id) ? -1 : d.id;
                 renderBattleTab();
-            });
-            grid.appendChild(card);
-        });
+            }
+        }));
 
         const preview = document.getElementById('battleStatsPreview');
-        if (battleSelected >= 0 && dragons[battleSelected]) {
-            const s = computeStats(dragons[battleSelected].latent);
+        const selDragon = battleSelected >= 0 ? dragons.find(d => d.id === battleSelected) : null;
+        if (selDragon) {
+            const s = computeStats(selDragon.latent, selDragon.level || 1);
             document.getElementById('bpHP').textContent = s.hp;
             document.getElementById('bpATK').textContent = s.atk;
             document.getElementById('bpDEF').textContent = s.def;
@@ -2254,9 +2891,11 @@
             document.getElementById('bpPower').textContent = s.power;
             preview.classList.add('visible');
             document.getElementById('battleStartBtn').classList.add('ready');
+            document.getElementById('battleScanBtn').classList.add('ready');
         } else {
             preview.classList.remove('visible');
             document.getElementById('battleStartBtn').classList.remove('ready');
+            document.getElementById('battleScanBtn').classList.remove('ready');
         }
     }
 
@@ -2287,40 +2926,42 @@
         setTimeout(() => el.remove(), 1000);
     }
 
-    function renderStatCard(id, stats) {
-        document.getElementById(id).innerHTML =
-            '<div class="battle-stat-mini"><span>ATK</span><span>' + stats.atk + '</span></div>'
+    function renderStatCard(id, stats, level) {
+        const lvlStr = level ? '<div class="battle-stat-mini" style="border-bottom:1px solid var(--border);padding-bottom:3px;margin-bottom:2px;"><span>LVL</span><span>' + level + '</span></div>' : '';
+        document.getElementById(id).innerHTML = lvlStr
+            + '<div class="battle-stat-mini"><span>ATK</span><span>' + stats.atk + '</span></div>'
             + '<div class="battle-stat-mini"><span>DEF</span><span>' + stats.def + '</span></div>'
             + '<div class="battle-stat-mini"><span>SPD</span><span>' + stats.spd + '</span></div>';
     }
 
     document.getElementById('battleStartBtn').addEventListener('click', async () => {
-        if (battleSelected < 0 || !dragons[battleSelected] || battling) return;
+        const playerDragon = battleSelected >= 0 ? dragons.find(d => d.id === battleSelected) : null;
+        if (!playerDragon || battling) return;
         battling = true;
-
-        const playerDragon = dragons[battleSelected];
-        const pStats = computeStats(playerDragon.latent);
+        const pStats = computeStats(playerDragon.latent, playerDragon.level || 1);
 
         const overlay = document.getElementById('battleOverlay');
         const log = document.getElementById('battleLog');
         document.getElementById('battleResult').classList.remove('show');
         document.getElementById('battleVs').classList.remove('show');
         battleDeadDragon = null;
-        log.textContent = 'Searching for opponent...';
+        log.textContent = 'Finding a sparring partner...';
 
         document.getElementById('battlePlayerHpBar').style.width = '100%';
         document.getElementById('battlePlayerHpBar').classList.remove('yellow', 'red');
         document.getElementById('battleEnemyHpBar').style.width = '100%';
         document.getElementById('battleEnemyHpBar').classList.remove('yellow', 'red');
 
-        overlay.classList.add('active');
+        // Fetch opponent in parallel with portal animation
+        const portalPromise = playPortalTransition('Entering the rift...');
+        const opponentPromise = fetch('/api/generate_opponent', { method: 'POST' }).then(r => r.json());
 
         try {
-            const resp = await fetch('/api/generate_opponent', { method: 'POST' });
-            const oppData = await resp.json();
+            const [, oppData] = await Promise.all([portalPromise, opponentPromise]);
 
             const rawOpp = computeStats(oppData.latent);
-            const targetPower = pStats.power * (0.9 + Math.random() * 0.2);
+            // Opponent scales to 1.1-1.35x player power — you need good QTEs to win
+            const targetPower = pStats.power * (1.1 + Math.random() * 0.25);
             const sf = targetPower / rawOpp.power;
             const oStats = {
                 hp:  Math.round(rawOpp.hp * sf),
@@ -2331,9 +2972,12 @@
             };
             const oppName = generateName(oppData.latent).split(' ')[0];
 
+            // Set up arena fully before showing it
+            overlay.classList.add('active');
             await runBattle(playerDragon, pStats, oppData, oStats, oppName, false);
         } catch (err) {
             console.error(err);
+            overlay.classList.add('active');
             log.textContent = 'Failed to find opponent...';
             await sleep(1500);
             overlay.classList.remove('active');
@@ -2356,7 +3000,7 @@
         document.getElementById('battlePlayerName').innerHTML = pName + ' ' + rarityBadgeHTML(playerDragon.latent);
         document.getElementById('battleEnemyName').innerHTML = oppName + ' ' + rarityBadgeHTML(oppData.latent);
 
-        renderStatCard('battlePlayerStats', pStats);
+        renderStatCard('battlePlayerStats', pStats, playerDragon.level || 1);
         renderStatCard('battleEnemyStats', oStats);
 
         let pHp = pStats.hp, oHp = oStats.hp;
@@ -2370,8 +3014,13 @@
         await sleep(1200);
         vs.classList.remove('show');
 
-        log.textContent = 'A wild ' + oppName + ' appeared!';
+        log.textContent = isFriend ? 'A challenger approaches!' : oppName + ' wants to spar!';
         await sleep(1200);
+
+        // QTE tracking
+        let qteScoreSum = 0, qteTotalCount = 0;
+        const oppRarity = computeRarity(oppData.latent);
+        const difficultyLevel = ['common','uncommon','rare','epic','legendary'].indexOf(oppRarity.tier);
 
         while (pHp > 0 && oHp > 0) {
             const playerFirst = pStats.spd >= oStats.spd;
@@ -2381,14 +3030,55 @@
                 : [{ who: 'enemy',  atk: oStats.atk, tDef: pStats.def, name: oppName },
                    { who: 'player', atk: pStats.atk, tDef: oStats.def, name: pName }];
 
+            const turnInd = document.getElementById('turnIndicator');
+
             for (const act of order) {
                 if (pHp <= 0 || oHp <= 0) break;
+
+                // Show turn indicator
+                turnInd.className = 'turn-indicator ' + (act.who === 'player' ? 'player' : 'enemy') + ' active';
 
                 const defReduction = act.tDef / (act.tDef + 50);
                 const baseDmg = act.atk * (1 - defReduction);
                 const variance = 0.85 + Math.random() * 0.3;
-                const dmg = Math.max(1, Math.round(baseDmg * variance));
                 const isCrit = variance > 1.10;
+
+                // QTE phase
+                let qteGrade = 'miss';
+                let qteMultiplier = 1.0;
+                if (act.who === 'player') {
+                    log.textContent = 'Your turn! Get ready...';
+                    await sleep(400);
+                    const qr = await runQTE('attack', difficultyLevel, oStats);
+                    qteGrade = qr.grade;
+                    qteMultiplier = qr.multiplier;
+                    qteScoreSum += (qr.grade === 'perfect' ? 2 : qr.grade === 'good' ? 1 : 0);
+                    qteTotalCount++;
+                } else {
+                    log.textContent = oppName + ' attacks! Block it!';
+                    await sleep(400);
+                    const qr = await runQTE('defend', difficultyLevel, oStats);
+                    qteGrade = qr.grade;
+                    qteMultiplier = qr.multiplier;
+                    qteScoreSum += (qr.grade === 'perfect' ? 2 : qr.grade === 'good' ? 1 : 0);
+                    qteTotalCount++;
+                }
+
+                // Player missed attack QTE → turn wasted, no damage dealt
+                if (act.who === 'player' && qteGrade === 'miss') {
+                    log.textContent = pName + ' fumbles the attack!';
+                    await sleep(1000);
+                    // still check low HP pulses
+                    const pImg = document.getElementById('battlePlayerImg');
+                    const eImg = document.getElementById('battleEnemyImg');
+                    if (pHp > 0 && pHp / pMax <= 0.25) pImg.classList.add('battle-low-hp');
+                    else pImg.classList.remove('battle-low-hp');
+                    if (oHp > 0 && oHp / oMax <= 0.25) eImg.classList.add('battle-low-hp');
+                    else eImg.classList.remove('battle-low-hp');
+                    continue;
+                }
+
+                const dmg = Math.max(1, Math.round(baseDmg * variance * (act.who === 'player' ? qteMultiplier : qteMultiplier)));
 
                 log.textContent = act.name + ' attacks!';
 
@@ -2409,11 +3099,13 @@
                 if (act.who === 'player') {
                     oHp = Math.max(0, oHp - dmg);
                     updateHpBar('enemy', oHp, oMax);
-                    log.textContent = pName + (isCrit ? ' lands a CRITICAL HIT for ' : ' deals ') + dmg + ' damage!';
+                    const prefix = qteMultiplier >= 1.5 ? 'PERFECT! ' : '';
+                    log.textContent = prefix + pName + (isCrit ? ' lands a CRITICAL HIT for ' : ' deals ') + dmg + ' damage!';
                 } else {
                     pHp = Math.max(0, pHp - dmg);
                     updateHpBar('player', pHp, pMax);
-                    log.textContent = oppName + (isCrit ? ' lands a CRITICAL HIT for ' : ' deals ') + dmg + ' damage!';
+                    const prefix = qteGrade === 'perfect' ? 'Blocked! ' : qteGrade === 'good' ? 'Partial block! ' : '';
+                    log.textContent = prefix + oppName + (isCrit ? ' lands a CRITICAL HIT for ' : ' deals ') + dmg + ' damage!';
                 }
 
                 await sleep(300);
@@ -2432,13 +3124,17 @@
             }
         }
 
+        // Hide turn indicator
+        document.getElementById('turnIndicator').className = 'turn-indicator';
+
         // Battle over — report to server
         const won = pHp > 0;
+        const xpBonus = qteTotalCount > 0 ? Math.round((qteScoreSum / (qteTotalCount * 2)) * 50) : 0;
 
         try {
             const resp = await authFetch('/api/battle/result', {
                 method: 'POST',
-                body: JSON.stringify({ dragon_id: playerDragon.id, won })
+                body: JSON.stringify({ dragon_id: playerDragon.id, won, xp_bonus: xpBonus })
             });
             const resultData = await resp.json();
 
@@ -2460,12 +3156,29 @@
 
                 resultTitle.textContent = 'VICTORY!';
                 resultTitle.className = 'battle-result-title win';
-                // Add the new egg to local state
-                if (resultData.egg_id) {
-                    eggs.push({ id: resultData.egg_id, type: 'random', latent: null, parent1_id: null, parent2_id: null });
+
+                // Update local dragon XP/level
+                const dragonIdx = dragons.findIndex(d => d.id === playerDragon.id);
+                if (dragonIdx >= 0) {
+                    dragons[dragonIdx].xp = resultData.new_xp || 0;
+                    dragons[dragonIdx].level = resultData.new_level || 1;
                 }
-                resultReward.innerHTML = '<div style="color:#6ee7b7;font-size:0.85rem;margin-bottom:8px;text-align:center;">You earned a wild egg!</div>'
-                    + '<div style="text-align:center;"><img class="battle-result-egg" src="/static/assets/egg1.png"></div>';
+
+                // Add the new egg to local state
+                const wonEggType = resultData.egg_type || 'random';
+                if (resultData.egg_id) {
+                    eggs.push({ id: resultData.egg_id, type: wonEggType, latent: null, parent1_id: null, parent2_id: null, hatch_ready_at: resultData.hatch_ready_at || null });
+                }
+
+                const isGoldenReward = wonEggType === 'golden';
+                const rewardEggImg = isGoldenReward ? '/static/assets/goldegg.png' : '/static/assets/egg1.png';
+                const rewardLabel = isGoldenReward ? 'You earned a <span style="color:#f59e0b;font-weight:800;">GOLDEN EGG!</span>' : 'You earned a wild egg!';
+                const xpGained = resultData.xp_gained || 0;
+                const leveledUp = resultData.leveled_up || false;
+                resultReward.innerHTML = '<div style="color:#6ee7b7;font-size:0.85rem;margin-bottom:4px;text-align:center;">' + rewardLabel + '</div>'
+                    + '<div style="text-align:center;"><img class="battle-result-egg" src="' + rewardEggImg + '"></div>'
+                    + '<div style="color:#f59e0b;font-size:0.8rem;margin-top:8px;text-align:center;font-weight:700;">+' + xpGained + ' XP</div>'
+                    + (leveledUp ? '<div class="level-up-text">LEVEL UP! Lv.' + (resultData.new_level || '') + '</div>' : '');
             } else {
                 log.textContent = pName + ' has fallen...';
                 document.getElementById('battlePlayerImg').classList.add('battle-defeat-fade');
@@ -2500,9 +3213,385 @@
         render();
     });
 
+    // ===== PORTAL TRANSITION =====
+    function playPortalTransition(text) {
+        return new Promise(resolve => {
+            const portal = document.getElementById('portalTransition');
+            const vortex = document.getElementById('portalVortex');
+            const textEl = document.getElementById('portalText');
+            const particlesEl = document.getElementById('portalParticles');
+            const ringsEl = document.getElementById('portalRings');
+
+            textEl.textContent = text || 'Entering the rift...';
+
+            // Reset vortex animation
+            vortex.style.animation = 'none';
+            vortex.offsetHeight;
+            vortex.style.animation = '';
+
+            // Spawn floating particles
+            particlesEl.innerHTML = '';
+            for (let i = 0; i < 25; i++) {
+                const p = document.createElement('div');
+                p.className = 'portal-particle';
+                p.style.left = (10 + Math.random() * 80) + '%';
+                p.style.bottom = (-10 + Math.random() * 30) + '%';
+                p.style.animationDelay = (Math.random() * 1.5) + 's';
+                p.style.animationDuration = (1.2 + Math.random() * 1.5) + 's';
+                p.style.width = p.style.height = (2 + Math.random() * 5) + 'px';
+                particlesEl.appendChild(p);
+            }
+
+            // Spawn expanding rings from center
+            ringsEl.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const ring = document.createElement('div');
+                ring.className = 'portal-ring';
+                const size = 100 + i * 80;
+                ring.style.width = size + 'px';
+                ring.style.height = size + 'px';
+                ring.style.animationDelay = (i * 0.3) + 's';
+                ring.style.animationDuration = '1.5s';
+                ringsEl.appendChild(ring);
+            }
+
+            portal.classList.remove('fade-out');
+            portal.classList.add('active');
+
+            // Fade out after vortex fills screen
+            setTimeout(() => {
+                portal.classList.add('fade-out');
+            }, 1800);
+
+            setTimeout(() => {
+                portal.classList.remove('active', 'fade-out');
+                particlesEl.innerHTML = '';
+                ringsEl.innerHTML = '';
+                resolve();
+            }, 2300);
+        });
+    }
+
+    // ===== QTE SYSTEM =====
+    // difficulty: 0-4 (common-legendary)
+    // oppStats: { hp, atk, def, spd } — used to vary ring size, speed, and position
+    function runQTE(type, difficulty, oppStats) {
+        return new Promise((resolve) => {
+            const container = document.getElementById('qteContainer');
+            const wrap = document.getElementById('qteRingWrap');
+            const ring = document.getElementById('qteRing');
+            const target = document.getElementById('qteTarget');
+            const shrink = document.getElementById('qteShrink');
+            const label = document.getElementById('qteLabel');
+            const resultEl = document.getElementById('qteResultText');
+
+            container.style.display = 'block';
+            label.textContent = type === 'attack' ? 'TAP TO ATTACK!' : 'TAP TO BLOCK!';
+            resultEl.textContent = '';
+            resultEl.className = 'qte-result-text';
+
+            // --- Dynamic sizing based on opponent DEF (attack) or ATK (defend) ---
+            // Tougher opponent stat = smaller rings = harder to hit
+            const relevantStat = type === 'attack' ? (oppStats ? oppStats.def : 15) : (oppStats ? oppStats.atk : 20);
+            // Ring outer size: 180px for weak opponents, down to 90px for strong ones
+            const outerSize = Math.round(Math.max(90, 180 - relevantStat * 1.5));
+            // Target size: proportionally smaller (roughly 1/3 of outer)
+            const targetSize = Math.round(Math.max(24, outerSize * 0.33));
+
+            ring.style.width = outerSize + 'px';
+            ring.style.height = outerSize + 'px';
+            target.style.width = targetSize + 'px';
+            target.style.height = targetSize + 'px';
+
+            // --- Dynamic speed based on opponent SPD + difficulty ---
+            // Faster opponent = shorter window
+            const spdFactor = oppStats ? oppStats.spd : 25;
+            const duration = Math.max(600, 1600 - difficulty * 120 - spdFactor * 6);
+
+            // --- Dynamic position based on opponent stats ---
+            // Use a hash of the current time + difficulty to pick a zone, so it varies each turn
+            const arena = document.getElementById('battleArena');
+            const aw = arena.offsetWidth || 360;
+            const ah = arena.offsetHeight || 600;
+            // Keep ring within safe area (padding from edges)
+            const pad = outerSize / 2 + 30;
+            const zones = [
+                { x: 0.25, y: 0.35 },  // top-left area
+                { x: 0.75, y: 0.35 },  // top-right area
+                { x: 0.50, y: 0.50 },  // center
+                { x: 0.30, y: 0.65 },  // bottom-left area
+                { x: 0.70, y: 0.65 },  // bottom-right area
+                { x: 0.50, y: 0.30 },  // top-center
+                { x: 0.50, y: 0.70 },  // bottom-center
+                { x: 0.20, y: 0.50 },  // mid-left
+                { x: 0.80, y: 0.50 },  // mid-right
+            ];
+            // Pick zone: harder opponents use more positions, easier ones stay more centered
+            const availableZones = Math.min(zones.length, 3 + difficulty * 2);
+            const zoneIdx = Math.floor(Math.random() * availableZones);
+            const zone = zones[zoneIdx];
+            const px = Math.max(pad, Math.min(aw - pad, zone.x * aw));
+            const py = Math.max(pad, Math.min(ah - pad, zone.y * ah));
+
+            wrap.style.left = px + 'px';
+            wrap.style.top = py + 'px';
+
+            const startTime = Date.now();
+            let resolved = false;
+
+            // Reset and animate shrinking ring
+            shrink.style.transition = 'none';
+            shrink.style.width = outerSize + 'px';
+            shrink.style.height = outerSize + 'px';
+            shrink.offsetHeight;
+            shrink.style.transition = 'width ' + duration + 'ms linear, height ' + duration + 'ms linear';
+            shrink.style.width = '0px';
+            shrink.style.height = '0px';
+
+            // --- Perfect window narrows with difficulty ---
+            const perfectLo = 0.58 + difficulty * 0.02;  // 0.58 → 0.66
+            const perfectHi = 0.86 - difficulty * 0.02;  // 0.86 → 0.78
+            const goodLo = 0.38 + difficulty * 0.01;      // 0.38 → 0.42
+            const goodHi = 0.96 - difficulty * 0.01;      // 0.96 → 0.92
+
+            function finishQTE(result) {
+                if (resolved) return;
+                resolved = true;
+                container.removeEventListener('click', handleTap);
+                container.removeEventListener('touchstart', handleTouch);
+                clearTimeout(timeoutId);
+
+                resultEl.textContent = result.label;
+                resultEl.className = 'qte-result-text ' + result.grade;
+
+                setTimeout(() => {
+                    container.style.display = 'none';
+                    resolve(result);
+                }, 500);
+            }
+
+            function isTapOnTarget(clientX, clientY) {
+                const rect = target.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                const r = rect.width / 2;
+                const dx = clientX - cx;
+                const dy = clientY - cy;
+                return (dx * dx + dy * dy) <= r * r;
+            }
+
+            function evaluateTap() {
+                const elapsed = Date.now() - startTime;
+                const progress = elapsed / duration;
+                if (progress >= perfectLo && progress <= perfectHi) {
+                    return { grade: 'perfect', multiplier: type === 'attack' ? 1.5 : 0.5, label: 'PERFECT!' };
+                } else if (progress >= goodLo && progress <= goodHi) {
+                    return { grade: 'good', multiplier: type === 'attack' ? 1.0 : 0.75, label: 'GOOD' };
+                } else {
+                    return { grade: 'miss', multiplier: type === 'attack' ? 0 : 1.0, label: 'MISS' };
+                }
+            }
+
+            function handleTap(e) {
+                e.preventDefault();
+                if (isTapOnTarget(e.clientX, e.clientY)) {
+                    finishQTE(evaluateTap());
+                } else {
+                    // Tapped outside the target — instant miss
+                    finishQTE({ grade: 'miss', multiplier: type === 'attack' ? 0 : 1.0, label: 'MISS' });
+                }
+            }
+            function handleTouch(e) {
+                e.preventDefault();
+                const t = e.touches[0];
+                if (isTapOnTarget(t.clientX, t.clientY)) {
+                    finishQTE(evaluateTap());
+                } else {
+                    finishQTE({ grade: 'miss', multiplier: type === 'attack' ? 0 : 1.0, label: 'MISS' });
+                }
+            }
+
+            container.addEventListener('click', handleTap);
+            container.addEventListener('touchstart', handleTouch, { passive: false });
+
+            const timeoutId = setTimeout(() => {
+                finishQTE({ grade: 'miss', multiplier: type === 'attack' ? 0 : 1.0, label: 'MISS' });
+            }, duration + 200);
+        });
+    }
+
+    // ===== WARMING MINIGAME =====
+    let warmingEgg = null;
+    let warmOverheat = false;
+    let warmLastTap = 0;
+    let warmTimerInterval = null;
+
+    function openWarmingMinigame(egg) {
+        warmingEgg = egg;
+        warmOverheat = false;
+        warmLastTap = 0;
+        const overlay = document.getElementById('warmOverlay');
+        const gauge = document.getElementById('warmGauge');
+        const hint = document.getElementById('warmHint');
+        const eggImg = document.getElementById('warmEggImg');
+        gauge.style.width = '0%';
+        gauge.classList.remove('overheat');
+        hint.textContent = 'Tap the egg to warm it up!';
+        hint.classList.remove('overheat');
+        eggImg.classList.remove('overheat');
+        eggImg.src = egg.type === 'golden' ? '/static/assets/goldegg.png' : '/static/assets/egg1.png';
+        overlay.classList.add('active');
+        updateWarmCountdown();
+        if (warmTimerInterval) clearInterval(warmTimerInterval);
+        warmTimerInterval = setInterval(updateWarmCountdown, 1000);
+    }
+
+    function updateWarmCountdown() {
+        if (!warmingEgg) return;
+        const ms = getEggRemainingMs(warmingEgg);
+        const el = document.getElementById('warmCountdown');
+        if (ms <= 0) {
+            el.textContent = 'READY!';
+            document.getElementById('warmHint').textContent = 'Your egg is ready to hatch!';
+            if (warmTimerInterval) { clearInterval(warmTimerInterval); warmTimerInterval = null; }
+        } else {
+            el.textContent = formatTimer(ms);
+        }
+    }
+
+    document.getElementById('warmEggImg').addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (!warmingEgg || warmOverheat) return;
+        const ms = getEggRemainingMs(warmingEgg);
+        if (ms <= 0) return;
+
+        const now = Date.now();
+        const interval = warmLastTap ? (now - warmLastTap) / 1000 : 999;
+        warmLastTap = now;
+
+        const eggImg = document.getElementById('warmEggImg');
+        const gauge = document.getElementById('warmGauge');
+        const hint = document.getElementById('warmHint');
+
+        // Tap animation
+        eggImg.classList.add('tap');
+        setTimeout(() => eggImg.classList.remove('tap'), 100);
+
+        if (interval < 0.4) {
+            // Overheat!
+            warmOverheat = true;
+            gauge.classList.add('overheat');
+            gauge.style.width = '100%';
+            eggImg.classList.add('overheat');
+            hint.textContent = 'Too fast! Overheated...';
+            hint.classList.add('overheat');
+            setTimeout(() => {
+                warmOverheat = false;
+                gauge.classList.remove('overheat');
+                gauge.style.width = '0%';
+                eggImg.classList.remove('overheat');
+                hint.textContent = 'Tap the egg to warm it up!';
+                hint.classList.remove('overheat');
+                warmLastTap = 0;
+            }, 3000);
+            return;
+        }
+
+        // Good tap — warm the egg
+        const inWarmZone = interval >= 0.8 && interval <= 2.0;
+        if (inWarmZone) {
+            gauge.style.width = '70%';
+        } else {
+            gauge.style.width = '30%';
+        }
+        setTimeout(() => { gauge.style.width = '0%'; }, 600);
+
+        try {
+            const resp = await authFetch('/api/eggs/' + warmingEgg.id + '/warm', { method: 'POST' });
+            if (resp.ok) {
+                const data = await resp.json();
+                warmingEgg.hatch_ready_at = data.hatch_ready_at;
+                // Update in eggs array
+                const eggIdx = eggs.findIndex(e => e.id === warmingEgg.id);
+                if (eggIdx >= 0) eggs[eggIdx].hatch_ready_at = data.hatch_ready_at;
+                updateWarmCountdown();
+            }
+        } catch (e) { /* rate limited or error, ignore */ }
+    });
+
+    document.getElementById('warmClose').addEventListener('click', () => {
+        document.getElementById('warmOverlay').classList.remove('active');
+        if (warmTimerInterval) { clearInterval(warmTimerInterval); warmTimerInterval = null; }
+        warmingEgg = null;
+        render();
+    });
+
+    // ===== DRAGON EVOLUTION =====
+    document.getElementById('detailEvolveBtn').addEventListener('click', async () => {
+        if (!detailDragon) return;
+        const evo = detailDragon.evolution || 0;
+        const lvl = detailDragon.level || 1;
+        const requiredLevel = 10 * (evo + 1);
+        if (lvl < requiredLevel || evo >= 2) return;
+
+        if (!await showConfirm('Evolve ' + detailDragon.name + '? This will change their appearance and increase their rarity!')) return;
+
+        const detailImg = document.getElementById('detailImg');
+        const evolveBtn = document.getElementById('detailEvolveBtn');
+        evolveBtn.className = 'detail-evolve-btn disabled';
+        evolveBtn.textContent = 'Evolving...';
+        detailImg.classList.add('evolving');
+
+        try {
+            const resp = await authFetch('/api/dragons/' + detailDragon.id + '/evolve', { method: 'POST' });
+            const data = await resp.json();
+
+            if (!resp.ok) {
+                showAlert(data.detail || 'Evolution failed');
+                detailImg.classList.remove('evolving');
+                showDetail(detailDragon);
+                return;
+            }
+
+            // Flash effect
+            const flash = document.createElement('div');
+            flash.className = 'evolution-flash';
+            document.body.appendChild(flash);
+            setTimeout(() => flash.remove(), 900);
+
+            // Update local state
+            detailDragon.latent = data.latent;
+            detailDragon.evolution = data.evolution;
+            imageCache.set(detailDragon.id, data.image);
+
+            const idx = dragons.findIndex(d => d.id === detailDragon.id);
+            if (idx >= 0) {
+                dragons[idx].latent = data.latent;
+                dragons[idx].evolution = data.evolution;
+            }
+
+            // Crossfade to new image
+            await sleep(500);
+            detailImg.classList.remove('evolving');
+            detailImg.src = 'data:image/png;base64,' + data.image;
+            detailImg.classList.add('evolution-reveal');
+            await sleep(800);
+            detailImg.classList.remove('evolution-reveal');
+
+            // Re-render detail view
+            showDetail(detailDragon);
+            render();
+        } catch (err) {
+            console.error('Evolution failed:', err);
+            detailImg.classList.remove('evolving');
+            showDetail(detailDragon);
+        }
+    });
+
     // ===== Init =====
     // ===== Google Sign-In =====
     let GOOGLE_CLIENT_ID = '';
+    let MAX_DRAGONS = 10;
 
     async function handleGoogleCredential(response) {
         const errorEl = document.getElementById('loginError');
@@ -2534,6 +3623,7 @@
             const resp = await fetch('/api/config');
             const cfg = await resp.json();
             GOOGLE_CLIENT_ID = cfg.google_client_id;
+            if (cfg.max_dragons) MAX_DRAGONS = cfg.max_dragons;
         } catch (e) { return; }
         if (!GOOGLE_CLIENT_ID) return;
         // Wait for GSI library to load

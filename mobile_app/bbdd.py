@@ -48,7 +48,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS eggs (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id     INTEGER NOT NULL REFERENCES users(id),
-            type        TEXT NOT NULL CHECK(type IN ('random', 'bred')),
+            type        TEXT NOT NULL CHECK(type IN ('random', 'bred', 'golden')),
             latent      BLOB,
             parent1_id  INTEGER,
             parent2_id  INTEGER,
@@ -63,6 +63,53 @@ def init_db():
         db.execute("ALTER TABLE users ADD COLUMN google_id TEXT UNIQUE")
     except sqlite3.OperationalError:
         pass  # column already exists
+
+    # XP / Leveling / Evolution migrations
+    for col in [
+        "ALTER TABLE dragons ADD COLUMN xp INTEGER DEFAULT 0",
+        "ALTER TABLE dragons ADD COLUMN level INTEGER DEFAULT 1",
+        "ALTER TABLE dragons ADD COLUMN evolution INTEGER DEFAULT 0",
+    ]:
+        try:
+            db.execute(col)
+        except sqlite3.OperationalError:
+            pass
+
+    # Egg incubation migrations
+    for col in [
+        "ALTER TABLE eggs ADD COLUMN hatch_ready_at TEXT",
+        "ALTER TABLE eggs ADD COLUMN last_warm_at TEXT",
+    ]:
+        try:
+            db.execute(col)
+        except sqlite3.OperationalError:
+            pass
+
+    # Migrate eggs table to support 'golden' type (existing CHECK only allows random/bred)
+    try:
+        db.execute("INSERT INTO eggs (user_id, type) VALUES (0, 'golden')")
+        # If it worked, the schema already supports golden — roll back the test row
+        db.execute("DELETE FROM eggs WHERE user_id = 0 AND type = 'golden'")
+    except sqlite3.IntegrityError:
+        # CHECK constraint blocks 'golden' — recreate table
+        db.executescript("""
+            CREATE TABLE eggs_new (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id     INTEGER NOT NULL REFERENCES users(id),
+                type        TEXT NOT NULL CHECK(type IN ('random', 'bred', 'golden')),
+                latent      BLOB,
+                parent1_id  INTEGER,
+                parent2_id  INTEGER,
+                created_at  TEXT DEFAULT (datetime('now')),
+                hatch_ready_at TEXT,
+                last_warm_at TEXT
+            );
+            INSERT INTO eggs_new SELECT id, user_id, type, latent, parent1_id, parent2_id, created_at, hatch_ready_at, last_warm_at FROM eggs;
+            DROP TABLE eggs;
+            ALTER TABLE eggs_new RENAME TO eggs;
+            CREATE INDEX IF NOT EXISTS idx_eggs_user ON eggs(user_id);
+        """)
+
     db.commit()
 
 
@@ -172,7 +219,7 @@ def get_dragons(user_id: int) -> list[dict]:
     """Get all dragons for a user."""
     db = get_db()
     rows = db.execute(
-        "SELECT id, latent, name, parent1_id, parent2_id, received FROM dragons WHERE user_id = ? ORDER BY id",
+        "SELECT id, latent, name, parent1_id, parent2_id, received, xp, level, evolution FROM dragons WHERE user_id = ? ORDER BY id",
         (user_id,),
     ).fetchall()
     return [
@@ -183,6 +230,9 @@ def get_dragons(user_id: int) -> list[dict]:
             "parent1_id": r["parent1_id"],
             "parent2_id": r["parent2_id"],
             "received": bool(r["received"]),
+            "xp": r["xp"] or 0,
+            "level": r["level"] or 1,
+            "evolution": r["evolution"] or 0,
         }
         for r in rows
     ]
@@ -192,7 +242,7 @@ def get_dragon(dragon_id: int, user_id: int) -> dict | None:
     """Get a single dragon owned by user."""
     db = get_db()
     r = db.execute(
-        "SELECT id, latent, name, parent1_id, parent2_id, received FROM dragons WHERE id = ? AND user_id = ?",
+        "SELECT id, latent, name, parent1_id, parent2_id, received, xp, level, evolution FROM dragons WHERE id = ? AND user_id = ?",
         (dragon_id, user_id),
     ).fetchone()
     if r is None:
@@ -204,6 +254,9 @@ def get_dragon(dragon_id: int, user_id: int) -> dict | None:
         "parent1_id": r["parent1_id"],
         "parent2_id": r["parent2_id"],
         "received": bool(r["received"]),
+        "xp": r["xp"] or 0,
+        "level": r["level"] or 1,
+        "evolution": r["evolution"] or 0,
     }
 
 
@@ -229,23 +282,28 @@ def delete_dragon(dragon_id: int, user_id: int) -> bool:
 # --- Eggs ---
 
 def create_egg(user_id: int, egg_type: str, latent: list[float] | None = None,
-               parent1_id: int | None = None, parent2_id: int | None = None) -> int:
-    """Create an egg. Returns egg_id."""
+               parent1_id: int | None = None, parent2_id: int | None = None,
+               random_hatch_minutes: int = 5, bred_hatch_minutes: int = 15) -> dict:
+    """Create an egg. Returns dict with egg_id and hatch_ready_at."""
     db = get_db()
     blob = latent_to_blob(latent) if latent else None
+    minutes = random_hatch_minutes if egg_type == "random" else bred_hatch_minutes
+    delay = "+" + str(minutes) + " minutes"
     cursor = db.execute(
-        "INSERT INTO eggs (user_id, type, latent, parent1_id, parent2_id) VALUES (?, ?, ?, ?, ?)",
-        (user_id, egg_type, blob, parent1_id, parent2_id),
+        "INSERT INTO eggs (user_id, type, latent, parent1_id, parent2_id, hatch_ready_at) VALUES (?, ?, ?, ?, ?, datetime('now', ?))",
+        (user_id, egg_type, blob, parent1_id, parent2_id, delay),
     )
     db.commit()
-    return cursor.lastrowid
+    egg_id = cursor.lastrowid
+    row = db.execute("SELECT hatch_ready_at FROM eggs WHERE id = ?", (egg_id,)).fetchone()
+    return {"egg_id": egg_id, "hatch_ready_at": row["hatch_ready_at"] if row else None}
 
 
 def get_eggs(user_id: int) -> list[dict]:
     """Get all eggs for a user."""
     db = get_db()
     rows = db.execute(
-        "SELECT id, type, latent, parent1_id, parent2_id FROM eggs WHERE user_id = ? ORDER BY id",
+        "SELECT id, type, latent, parent1_id, parent2_id, hatch_ready_at FROM eggs WHERE user_id = ? ORDER BY id",
         (user_id,),
     ).fetchall()
     return [
@@ -255,6 +313,7 @@ def get_eggs(user_id: int) -> list[dict]:
             "latent": blob_to_latent(r["latent"]) if r["latent"] else None,
             "parent1_id": r["parent1_id"],
             "parent2_id": r["parent2_id"],
+            "hatch_ready_at": r["hatch_ready_at"],
         }
         for r in rows
     ]
@@ -264,7 +323,7 @@ def get_egg(egg_id: int, user_id: int) -> dict | None:
     """Get a single egg owned by user."""
     db = get_db()
     r = db.execute(
-        "SELECT id, type, latent, parent1_id, parent2_id FROM eggs WHERE id = ? AND user_id = ?",
+        "SELECT id, type, latent, parent1_id, parent2_id, hatch_ready_at FROM eggs WHERE id = ? AND user_id = ?",
         (egg_id, user_id),
     ).fetchone()
     if r is None:
@@ -275,6 +334,7 @@ def get_egg(egg_id: int, user_id: int) -> dict | None:
         "latent": blob_to_latent(r["latent"]) if r["latent"] else None,
         "parent1_id": r["parent1_id"],
         "parent2_id": r["parent2_id"],
+        "hatch_ready_at": r["hatch_ready_at"],
     }
 
 
@@ -287,7 +347,7 @@ def delete_egg(egg_id: int, user_id: int) -> bool:
 
 
 def create_initial_eggs(user_id: int, count: int = 5):
-    """Create initial random eggs for a new user."""
+    """Create initial random eggs for a new user (immediately hatchable)."""
     db = get_db()
     for _ in range(count):
         db.execute(
@@ -295,3 +355,72 @@ def create_initial_eggs(user_id: int, count: int = 5):
             (user_id,),
         )
     db.commit()
+
+
+# --- XP / Leveling ---
+
+MAX_LEVEL = 20
+
+
+def award_xp(dragon_id: int, user_id: int, xp_amount: int) -> dict | None:
+    """Award XP to a dragon. Returns {xp, level, leveled_up} or None."""
+    db = get_db()
+    r = db.execute(
+        "SELECT xp, level FROM dragons WHERE id = ? AND user_id = ?",
+        (dragon_id, user_id),
+    ).fetchone()
+    if r is None:
+        return None
+    xp = (r["xp"] or 0) + xp_amount
+    level = r["level"] or 1
+    old_level = level
+    while level < MAX_LEVEL and xp >= level * 100:
+        xp -= level * 100
+        level += 1
+    db.execute(
+        "UPDATE dragons SET xp = ?, level = ? WHERE id = ? AND user_id = ?",
+        (xp, level, dragon_id, user_id),
+    )
+    db.commit()
+    return {"xp": xp, "level": level, "leveled_up": level > old_level}
+
+
+# --- Egg warming ---
+
+def warm_egg(egg_id: int, user_id: int, seconds: int = 10) -> dict | None:
+    """Warm an egg to reduce incubation time. Rate-limited to 1s between warms."""
+    db = get_db()
+    r = db.execute(
+        "SELECT hatch_ready_at, last_warm_at FROM eggs WHERE id = ? AND user_id = ?",
+        (egg_id, user_id),
+    ).fetchone()
+    if r is None:
+        return None
+    # Rate limit: at least 1 second between warms
+    if r["last_warm_at"]:
+        elapsed = db.execute(
+            "SELECT (julianday('now') - julianday(?)) * 86400 AS secs",
+            (r["last_warm_at"],),
+        ).fetchone()
+        if elapsed and elapsed["secs"] < 1.0:
+            return None
+    db.execute(
+        "UPDATE eggs SET hatch_ready_at = datetime(hatch_ready_at, '-' || ? || ' seconds'), last_warm_at = datetime('now') WHERE id = ? AND user_id = ?",
+        (seconds, egg_id, user_id),
+    )
+    db.commit()
+    updated = db.execute("SELECT hatch_ready_at FROM eggs WHERE id = ?", (egg_id,)).fetchone()
+    return {"hatch_ready_at": updated["hatch_ready_at"] if updated else None}
+
+
+# --- Dragon evolution ---
+
+def update_dragon_latent(dragon_id: int, user_id: int, latent: list[float], evolution: int) -> bool:
+    """Update a dragon's latent vector and evolution stage."""
+    db = get_db()
+    cursor = db.execute(
+        "UPDATE dragons SET latent = ?, evolution = ? WHERE id = ? AND user_id = ?",
+        (latent_to_blob(latent), evolution, dragon_id, user_id),
+    )
+    db.commit()
+    return cursor.rowcount > 0

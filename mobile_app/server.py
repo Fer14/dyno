@@ -5,7 +5,9 @@ import math
 import os
 import random
 import sqlite3
+import tomllib
 import urllib.request
+from pathlib import Path
 
 import numpy as np
 import onnxruntime as ort
@@ -21,10 +23,19 @@ import bbdd
 load_dotenv()
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 
+# Load config
+_config_path = Path(__file__).parent / "config.toml"
+with open(_config_path, "rb") as f:
+    CONFIG = tomllib.load(f)
+
 MODEL_PATH = "/home/fer/Escritorio/dragons/dragon/app/vae_decoder.onnx"
 LATENT_DIM = 1024
 EXPECTED_NORM = math.sqrt(LATENT_DIM)  # ~32.0
 NORM_STD = 0.71  # empirical std for 1024-dim standard normal
+MAX_DRAGONS = CONFIG["dragons"]["max_dragons"]
+RANDOM_HATCH_MINUTES = CONFIG["eggs"]["random_hatch_minutes"]
+BRED_HATCH_MINUTES = CONFIG["eggs"]["bred_hatch_minutes"]
+GOLDEN_CHANCE = CONFIG["eggs"]["golden_chance_percent"] / 100.0
 
 # Dragon name generation (ported from frontend)
 NAME_PREFIXES = [
@@ -55,6 +66,8 @@ def compute_rarity(latent: list[float]) -> tuple[str, float]:
     """Return (tier, sigma) for a latent vector."""
     norm = math.sqrt(sum(x * x for x in latent))
     sigma = abs(norm - EXPECTED_NORM) / NORM_STD
+    if sigma >= 3.5:
+        return "mythic", sigma
     if sigma >= 2.5:
         return "legendary", sigma
     if sigma >= 2.0:
@@ -259,8 +272,42 @@ def hatch(req: HatchRequest, request: Request):
     if egg is None:
         raise HTTPException(status_code=404, detail="Egg not found")
 
-    if egg["type"] == "random":
+    # Check incubation time (NULL = immediately hatchable for legacy/starter eggs)
+    if egg.get("hatch_ready_at"):
+        from datetime import datetime, timezone
+        ready = datetime.fromisoformat(egg["hatch_ready_at"]).replace(tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc)
+        if now < ready:
+            raise HTTPException(status_code=400, detail="Egg not ready yet")
+
+    # Check dragon limit
+    current_dragons = bbdd.get_dragons(user["id"])
+    if len(current_dragons) >= MAX_DRAGONS:
+        raise HTTPException(status_code=400, detail=f"Dragon limit reached ({MAX_DRAGONS})")
+
+    if egg["type"] in ("random", "golden"):
         latent = [randn_bm() for _ in range(LATENT_DIM)]
+        # Golden eggs: force rarity to rare or above (sigma >= 1.5)
+        if egg["type"] == "golden":
+            norm = math.sqrt(sum(x * x for x in latent))
+            if norm == 0:
+                norm = 1.0
+            direction = [x / norm for x in latent]
+            # Weighted random: mostly rare/epic, sometimes legendary, very rarely mythic
+            roll = random.random()
+            if roll < 0.40:
+                target_sigma = 1.5 + random.random() * 0.5   # Rare (1.5-2.0)
+            elif roll < 0.75:
+                target_sigma = 2.0 + random.random() * 0.5   # Epic (2.0-2.5)
+            elif roll < 0.95:
+                target_sigma = 2.5 + random.random() * 1.0   # Legendary (2.5-3.5)
+            else:
+                target_sigma = 3.5 + random.random() * 0.5   # Mythic (3.5-4.0)
+            if norm >= EXPECTED_NORM:
+                new_norm = EXPECTED_NORM + target_sigma * NORM_STD
+            else:
+                new_norm = EXPECTED_NORM - target_sigma * NORM_STD
+            latent = [d * new_norm for d in direction]
     else:
         latent = egg["latent"]
 
@@ -339,6 +386,7 @@ def breed(req: BreedRequest, request: Request):
                 "rare": 1.75,
                 "epic": 2.25,
                 "legendary": 3.0,
+                "mythic": 4.0,
             }
             mid_sigma = tier_mid[tier1]
             if target_norm >= EXPECTED_NORM:
@@ -349,12 +397,14 @@ def breed(req: BreedRequest, request: Request):
             if child_norm > 0:
                 mutated = [v * (forced_norm / child_norm) for v in mutated]
 
-    egg_id = bbdd.create_egg(
+    egg_result = bbdd.create_egg(
         user["id"], "bred", mutated,
         parent1_id=dragon1["id"],
         parent2_id=parent2_id,
+        random_hatch_minutes=RANDOM_HATCH_MINUTES,
+        bred_hatch_minutes=BRED_HATCH_MINUTES,
     )
-    return {"egg_id": egg_id, "latent": mutated}
+    return {"egg_id": egg_result["egg_id"], "latent": mutated, "hatch_ready_at": egg_result["hatch_ready_at"]}
 
 
 @app.post("/api/generate_opponent")
@@ -374,6 +424,9 @@ class QRAddRequest(BaseModel):
 def add_from_qr(req: QRAddRequest, request: Request):
     """Add a dragon received via QR scan."""
     user = get_current_user(request)
+    current_dragons = bbdd.get_dragons(user["id"])
+    if len(current_dragons) >= MAX_DRAGONS:
+        raise HTTPException(status_code=400, detail=f"Dragon limit reached ({MAX_DRAGONS})")
     img_b64 = decode_latent(req.latent)
     dragon_id = bbdd.create_dragon(
         user["id"], req.latent, req.name, received=True,
@@ -384,11 +437,12 @@ def add_from_qr(req: QRAddRequest, request: Request):
 class BattleResultRequest(BaseModel):
     dragon_id: int
     won: bool
+    xp_bonus: int = 0
 
 
 @app.post("/api/battle/result")
 def battle_result(req: BattleResultRequest, request: Request):
-    """Record battle result. Win: earn random egg. Lose: dragon dies."""
+    """Record battle result. Win: earn XP + random egg. Lose: dragon dies."""
     user = get_current_user(request)
 
     dragon = bbdd.get_dragon(req.dragon_id, user["id"])
@@ -396,18 +450,101 @@ def battle_result(req: BattleResultRequest, request: Request):
         raise HTTPException(status_code=404, detail="Dragon not found")
 
     if req.won:
-        egg_id = bbdd.create_egg(user["id"], "random")
-        return {"ok": True, "egg_id": egg_id}
+        xp_amount = 50 + min(max(req.xp_bonus, 0), 50)
+        xp_result = bbdd.award_xp(req.dragon_id, user["id"], xp_amount)
+        egg_type = "golden" if random.random() < GOLDEN_CHANCE else "random"
+        egg_result = bbdd.create_egg(user["id"], egg_type, random_hatch_minutes=RANDOM_HATCH_MINUTES, bred_hatch_minutes=BRED_HATCH_MINUTES)
+        return {
+            "ok": True,
+            "egg_id": egg_result["egg_id"],
+            "egg_type": egg_type,
+            "hatch_ready_at": egg_result["hatch_ready_at"],
+            "xp_gained": xp_amount,
+            "new_xp": xp_result["xp"] if xp_result else 0,
+            "new_level": xp_result["level"] if xp_result else 1,
+            "leveled_up": xp_result["leveled_up"] if xp_result else False,
+        }
     else:
         bbdd.delete_dragon(req.dragon_id, user["id"])
         return {"ok": True}
 
 
+# --- Egg warming ---
+
+@app.post("/api/eggs/{egg_id}/warm")
+def warm_egg(egg_id: int, request: Request):
+    """Warm an egg to reduce incubation time."""
+    user = get_current_user(request)
+    result = bbdd.warm_egg(egg_id, user["id"], seconds=10)
+    if result is None:
+        raise HTTPException(status_code=400, detail="Too soon or egg not found")
+    return {"ok": True, "hatch_ready_at": result["hatch_ready_at"]}
+
+
+# --- Dragon evolution ---
+
+@app.post("/api/dragons/{dragon_id}/evolve")
+def evolve_dragon(dragon_id: int, request: Request):
+    """Evolve a dragon: scale latent norm to next rarity tier."""
+    user = get_current_user(request)
+    dragon = bbdd.get_dragon(dragon_id, user["id"])
+    if dragon is None:
+        raise HTTPException(status_code=404, detail="Dragon not found")
+
+    level = dragon.get("level", 1)
+    evolution = dragon.get("evolution", 0)
+
+    required_level = 10 * (evolution + 1)  # 10, 20
+    if level < required_level:
+        raise HTTPException(status_code=400, detail=f"Requires level {required_level}")
+    if evolution >= 2:
+        raise HTTPException(status_code=400, detail="Max evolution reached")
+
+    latent = dragon["latent"]
+    norm = math.sqrt(sum(x * x for x in latent))
+    if norm == 0:
+        raise HTTPException(status_code=400, detail="Invalid latent vector")
+
+    direction = [x / norm for x in latent]
+    current_sigma = abs(norm - EXPECTED_NORM) / NORM_STD
+
+    # Find next rarity tier boundary
+    tier_boundaries = [1.0, 1.5, 2.0, 2.5, 3.5, 4.0]
+    target_sigma = None
+    for boundary in tier_boundaries:
+        if boundary > current_sigma:
+            target_sigma = boundary
+            break
+    if target_sigma is None:
+        target_sigma = current_sigma + 0.5  # already legendary, push further
+
+    # Preserve direction (above/below EXPECTED_NORM)
+    if norm >= EXPECTED_NORM:
+        new_norm = EXPECTED_NORM + target_sigma * NORM_STD
+    else:
+        new_norm = EXPECTED_NORM - target_sigma * NORM_STD
+
+    evolved_latent = [d * new_norm for d in direction]
+
+    bbdd.update_dragon_latent(dragon_id, user["id"], evolved_latent, evolution + 1)
+    img_b64 = decode_latent(evolved_latent)
+    new_rarity, new_sigma = compute_rarity(evolved_latent)
+
+    return {
+        "ok": True,
+        "latent": evolved_latent,
+        "image": img_b64,
+        "evolution": evolution + 1,
+        "rarity": new_rarity,
+        "sigma": new_sigma,
+    }
+
+
 # Serve frontend
 @app.get("/api/config")
 def get_config():
-    """Return public config (Google Client ID) to the frontend."""
-    return {"google_client_id": GOOGLE_CLIENT_ID}
+    """Return public config to the frontend."""
+    return {"google_client_id": GOOGLE_CLIENT_ID, "max_dragons": MAX_DRAGONS}
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
