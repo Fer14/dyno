@@ -522,7 +522,7 @@
         }
 
         .battle-player {
-            position: absolute; bottom: 12%; left: 5%;
+            position: absolute; bottom: 16%; left: 5%;
             display: flex; flex-direction: column; align-items: center;
         }
         .battle-player-img {
@@ -566,12 +566,12 @@
 
         /* Stat bars in arena */
         .battle-stat-bars {
-            position: absolute; bottom: 4%; right: 4%;
+            position: absolute; bottom: 16%; right: 4%;
             background: rgba(0,0,0,0.5); border: 1px solid var(--border);
             border-radius: 10px; padding: 10px 16px; font-size: 0.8rem;
             min-width: 130px;
         }
-        .battle-stat-bars.left { right: auto; left: 4%; bottom: auto; top: 4%; }
+        .battle-stat-bars.left { right: auto; left: 4%; bottom: auto; top: 13%; }
         .battle-stat-mini {
             display: flex; justify-content: space-between; gap: 12px;
             padding: 2px 0; color: rgba(255,255,255,0.5);
@@ -1203,65 +1203,267 @@
         }
 
         /* ===== TURN INDICATOR ===== */
-        .turn-indicator {
-            position: absolute; z-index: 12;
-            width: 8px; height: 8px; border-radius: 50%;
-            pointer-events: none; opacity: 0;
-            transition: opacity 0.3s;
+        /* ===== BREATH FORGE BATTLE ===== */
+        .forge-embers {
+            display: flex; gap: 6px; justify-content: center;
+            padding: 4px 0;
         }
-        .turn-indicator.active { opacity: 1; }
-        .turn-indicator.player {
-            bottom: 11%; left: 3%;
-            background: #6ee7b7;
-            box-shadow: 0 0 8px var(--green-glow), 0 0 16px var(--green-glow);
-        }
-        .turn-indicator.enemy {
-            top: 7%; right: 3%;
-            background: #f59e0b;
-            box-shadow: 0 0 8px rgba(245,158,11,0.5), 0 0 16px rgba(245,158,11,0.4);
-        }
-
-        /* ===== QTE (BATTLE) ===== */
-        .qte-container {
-            position: absolute; inset: 0; z-index: 30;
-            background: rgba(0,0,0,0.5);
-            -webkit-user-select: none; user-select: none;
-        }
-        .qte-ring-wrap {
-            position: absolute;
-            display: flex; flex-direction: column; align-items: center;
-            transform: translate(-50%, -50%);
-            transition: none;
-        }
-        .qte-ring {
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
+        .forge-ember-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            border: 1.5px solid rgba(255,255,255,0.12);
+            transition: all 0.3s ease;
             position: relative;
         }
-        .qte-target {
-            border-radius: 50%;
-            border: 3px solid var(--green);
-            position: absolute;
-            box-shadow: 0 0 10px var(--green-glow), inset 0 0 10px var(--green-glow);
+        .forge-ember-dot.lit {
+            background: radial-gradient(circle at 40% 35%, #c084fc, #7c3aed 60%, #581c87);
+            border-color: #a855f7;
+            box-shadow: 0 0 6px rgba(168,85,247,0.6), 0 0 14px rgba(124,58,237,0.3);
+            animation: emberPulse 1.4s ease-in-out infinite;
         }
-        .qte-shrink {
-            border-radius: 50%;
-            border: 3px solid rgba(255,255,255,0.8);
-            position: absolute;
-            box-shadow: 0 0 8px rgba(255,255,255,0.3);
+        .forge-ember-dot.lit:nth-child(4) {
+            background: radial-gradient(circle at 40% 35%, #e879f9, #a855f7 60%, #7c3aed);
+            box-shadow: 0 0 8px rgba(232,121,249,0.7), 0 0 18px rgba(168,85,247,0.4);
         }
-        .qte-label {
-            font-size: 1.1rem; font-weight: 800; color: white;
-            margin-top: 16px; letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        .forge-ember-dot.lit:nth-child(5) {
+            background: radial-gradient(circle at 40% 35%, #f0abfc, #d946ef 50%, #a855f7);
+            border-color: #d946ef;
+            box-shadow: 0 0 10px rgba(217,70,239,0.8), 0 0 24px rgba(168,85,247,0.5), 0 0 40px rgba(124,58,237,0.2);
+            animation: emberPulseMax 0.8s ease-in-out infinite;
         }
-        .qte-result-text {
-            font-size: 1.8rem; font-weight: 800; margin-top: 8px;
-            min-height: 2.2rem;
+        @keyframes emberPulse {
+            0%, 100% { box-shadow: 0 0 6px rgba(168,85,247,0.6), 0 0 14px rgba(124,58,237,0.3); }
+            50%      { box-shadow: 0 0 10px rgba(168,85,247,0.8), 0 0 20px rgba(124,58,237,0.5); }
         }
-        .qte-result-text.perfect { color: #f59e0b; text-shadow: 0 0 20px rgba(245,158,11,0.8); }
-        .qte-result-text.good { color: #22c55e; text-shadow: 0 0 12px rgba(34,197,94,0.6); }
-        .qte-result-text.miss { color: #ef4444; text-shadow: 0 0 12px rgba(239,68,68,0.6); }
+        @keyframes emberPulseMax {
+            0%, 100% { box-shadow: 0 0 10px rgba(217,70,239,0.8), 0 0 24px rgba(168,85,247,0.5); transform: scale(1); }
+            50%      { box-shadow: 0 0 16px rgba(217,70,239,1), 0 0 32px rgba(168,85,247,0.7), 0 0 48px rgba(124,58,237,0.3); transform: scale(1.15); }
+        }
+
+        .forge-actions {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            display: flex; gap: 8px; padding: 10px 12px;
+            padding-bottom: calc(10px + var(--safe-bottom));
+            background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
+            z-index: 20; justify-content: center;
+            opacity: 0; visibility: hidden; transition: all 0.3s;
+        }
+        .forge-actions.show { opacity: 1; visibility: visible; }
+
+        /* Fire effect behind action bar */
+        .forge-actions::before, .forge-actions::after {
+            content: ''; position: absolute; left: 5%; right: 5%; bottom: 60px;
+            height: 80px; z-index: -1; pointer-events: none;
+            border-radius: 50% 50% 0 0;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .forge-actions::after {
+            bottom: 50px; left: 15%; right: 15%; height: 60px;
+        }
+
+        .forge-actions.glow-forge::before {
+            opacity: 1;
+            background: radial-gradient(ellipse at 50% 100%, rgba(124,58,237,0.7) 0%, rgba(168,85,247,0.3) 50%, transparent 100%);
+            animation: fireDance1 0.8s ease-in-out infinite alternate;
+        }
+        .forge-actions.glow-forge::after {
+            opacity: 1;
+            background: radial-gradient(ellipse at 50% 100%, rgba(192,132,252,0.6) 0%, rgba(124,58,237,0.2) 60%, transparent 100%);
+            animation: fireDance2 0.6s ease-in-out infinite alternate-reverse;
+        }
+
+        .forge-actions.glow-strike::before {
+            opacity: 1;
+            background: radial-gradient(ellipse at 50% 100%, rgba(25,155,52,0.7) 0%, rgba(34,197,94,0.3) 50%, transparent 100%);
+            animation: fireDance1 0.8s ease-in-out infinite alternate;
+        }
+        .forge-actions.glow-strike::after {
+            opacity: 1;
+            background: radial-gradient(ellipse at 50% 100%, rgba(110,231,183,0.6) 0%, rgba(25,155,52,0.2) 60%, transparent 100%);
+            animation: fireDance2 0.6s ease-in-out infinite alternate-reverse;
+        }
+
+        .forge-actions.glow-roar::before {
+            opacity: 1;
+            background: radial-gradient(ellipse at 50% 100%, rgba(227,57,11,0.7) 0%, rgba(245,158,11,0.3) 50%, transparent 100%);
+            animation: fireDance1 0.8s ease-in-out infinite alternate;
+        }
+        .forge-actions.glow-roar::after {
+            opacity: 1;
+            background: radial-gradient(ellipse at 50% 100%, rgba(252,211,77,0.6) 0%, rgba(227,57,11,0.2) 60%, transparent 100%);
+            animation: fireDance2 0.6s ease-in-out infinite alternate-reverse;
+        }
+
+        @keyframes fireDance1 {
+            0%   { transform: scaleX(1) scaleY(1); opacity: 0.7; }
+            33%  { transform: scaleX(1.05) scaleY(1.15); opacity: 1; }
+            66%  { transform: scaleX(0.95) scaleY(0.9); opacity: 0.6; }
+            100% { transform: scaleX(1.02) scaleY(1.1); opacity: 0.85; }
+        }
+        @keyframes fireDance2 {
+            0%   { transform: scaleX(1) scaleY(1); opacity: 0.5; }
+            50%  { transform: scaleX(1.1) scaleY(1.2); opacity: 0.8; }
+            100% { transform: scaleX(0.9) scaleY(0.85); opacity: 0.6; }
+        }
+
+        .forge-btn {
+            flex: 1; max-width: 120px; padding: 14px 8px;
+            border: 2px solid; border-radius: 12px;
+            font-family: 'Sono', sans-serif; font-weight: 700; font-size: 0.85rem;
+            cursor: pointer; transition: all 0.15s;
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+            -webkit-user-select: none; user-select: none;
+            position: relative; overflow: hidden;
+        }
+        .forge-btn:active:not(.disabled) { transform: scale(0.95); }
+        .forge-btn .btn-label { font-size: 0.7rem; opacity: 0.7; font-weight: 400; }
+
+        .forge-btn.forge {
+            background: #7c3aed;
+            border-color: rgba(255,255,255,0.6);
+            color: #fff;
+        }
+        .forge-btn.forge:active:not(.disabled) { background: #6d28d9; }
+
+        .forge-btn.strike {
+            background: var(--green);
+            border-color: rgba(255,255,255,0.6);
+            color: #fff;
+        }
+        .forge-btn.strike:active:not(.disabled) { background: #15803d; }
+
+        .forge-btn.roar {
+            background: var(--red);
+            border-color: rgba(255,255,255,0.6);
+            color: #fff;
+        }
+        .forge-btn.roar:active:not(.disabled) { background: #c32a00; }
+
+        .forge-btn.disabled {
+            opacity: 0.25; pointer-events: none;
+        }
+        .forge-btn.selected {
+            transform: scale(1.05);
+        }
+        .forge-btn.selected.forge { background: #9333ea; border-color: #fff; box-shadow: 0 0 18px rgba(124,58,237,0.7); }
+        .forge-btn.selected.strike { background: #22c55e; border-color: #fff; box-shadow: 0 0 18px rgba(25,155,52,0.7); }
+        .forge-btn.selected.roar { background: #ff4d1a; border-color: #fff; box-shadow: 0 0 18px rgba(227,57,11,0.7); }
+
+        .forge-timer {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+            background: rgba(255,255,255,0.15); z-index: 21;
+        }
+        .forge-timer-bar {
+            height: 100%; background: #c084fc;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 6px rgba(168,85,247,0.5);
+        }
+
+        .forge-personality-hint {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 0.75rem; color: rgba(255,255,255,0.35);
+            font-style: italic; text-align: center;
+            pointer-events: none; z-index: 2; white-space: nowrap;
+        }
+
+        /* Ember glow on dragon sprites */
+        .ember-glow-1 { filter: drop-shadow(0 0 4px rgba(168,85,247,0.3)); }
+        .ember-glow-2 { filter: drop-shadow(0 0 8px rgba(168,85,247,0.5)); }
+        .ember-glow-3 { filter: drop-shadow(0 0 12px rgba(168,85,247,0.6)) drop-shadow(0 0 20px rgba(124,58,237,0.3)); }
+        .ember-glow-4 { filter: drop-shadow(0 0 16px rgba(217,70,239,0.7)) drop-shadow(0 0 28px rgba(168,85,247,0.4)); animation: glowShake 0.5s ease-in-out infinite; }
+        .ember-glow-5 { filter: drop-shadow(0 0 24px rgba(217,70,239,0.9)) drop-shadow(0 0 40px rgba(168,85,247,0.6)) drop-shadow(0 0 60px rgba(124,58,237,0.3)); animation: glowShake 0.3s ease-in-out infinite; }
+        .battle-enemy-img.ember-glow-1, .battle-enemy-img.ember-glow-2, .battle-enemy-img.ember-glow-3 { transform: scaleX(-1); }
+        .battle-enemy-img.ember-glow-4 { animation: glowShakeEnemy 0.5s ease-in-out infinite; }
+        .battle-enemy-img.ember-glow-5 { animation: glowShakeEnemy 0.3s ease-in-out infinite; }
+        @keyframes glowShake {
+            0%, 100% { transform: translate(0,0); }
+            25% { transform: translate(-1px, 1px); }
+            75% { transform: translate(1px, -1px); }
+        }
+        @keyframes glowShakeEnemy {
+            0%, 100% { transform: scaleX(-1) translate(0,0); }
+            25% { transform: scaleX(-1) translate(-1px, 1px); }
+            75% { transform: scaleX(-1) translate(1px, -1px); }
+        }
+
+        /* Wrath screen effect */
+        .wrath-overlay {
+            position: absolute; inset: 0; z-index: 25; pointer-events: none;
+            background: radial-gradient(circle at 50% 50%, rgba(124,58,237,0.4) 0%, rgba(88,28,135,0.2) 50%, transparent 80%);
+            opacity: 0; transition: opacity 0.5s;
+        }
+        .wrath-overlay.active { opacity: 1; animation: wrathPulse 0.6s ease-in-out infinite; }
+        @keyframes wrathPulse {
+            0%, 100% { opacity: 0.6; }
+            50%      { opacity: 1; }
+        }
+
+        /* Wrath cinematic */
+        .wrath-cinematic {
+            position: absolute; inset: 0; z-index: 35;
+            background: #000; pointer-events: none;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden;
+        }
+        .wrath-cinematic.show { opacity: 1; visibility: visible; }
+        .wrath-cinematic .wrath-text {
+            font-size: 2rem; font-weight: 800; letter-spacing: 4px;
+            color: #d946ef;
+            text-shadow: 0 0 30px rgba(217,70,239,0.8), 0 0 60px rgba(168,85,247,0.4);
+        }
+        .wrath-flash {
+            position: absolute; inset: 0;
+            background: radial-gradient(circle, rgba(217,70,239,0.6) 0%, rgba(124,58,237,0.3) 40%, transparent 70%);
+            animation: wrathFlash 0.8s ease-out forwards;
+        }
+        @keyframes wrathFlash {
+            0% { opacity: 0; transform: scale(0.3); }
+            30% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(2); }
+        }
+
+        /* Action result text */
+        .forge-result-text {
+            position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 1.1rem; font-weight: 800; z-index: 15;
+            pointer-events: none; opacity: 0;
+            animation: forgeResultPop 1.2s ease-out forwards;
+        }
+        @keyframes forgeResultPop {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            15% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+            30% { transform: translate(-50%, -50%) scale(1); }
+            70% { opacity: 1; }
+            100% { opacity: 0; transform: translate(-50%, -60%) scale(0.9); }
+        }
+        .forge-result-text.forge-text { color: #c084fc; text-shadow: 0 0 12px rgba(168,85,247,0.6); }
+        .forge-result-text.strike-text { color: #22c55e; text-shadow: 0 0 12px rgba(34,197,94,0.6); }
+        .forge-result-text.roar-text { color: #fcd34d; text-shadow: 0 0 12px rgba(245,158,11,0.6); }
+        .forge-result-text.stagger-text { color: #fb923c; text-shadow: 0 0 12px rgba(251,146,60,0.6); }
+
+        /* Stagger visual */
+        .staggered { animation: staggerShake 0.4s ease-in-out; }
+        @keyframes staggerShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+        .battle-enemy-img.staggered { animation: staggerShakeEnemy 0.4s ease-in-out; }
+        @keyframes staggerShakeEnemy {
+            0%, 100% { transform: scaleX(-1) translateX(0); }
+            20% { transform: scaleX(-1) translateX(-6px); }
+            40% { transform: scaleX(-1) translateX(6px); }
+            60% { transform: scaleX(-1) translateX(-4px); }
+            80% { transform: scaleX(-1) translateX(4px); }
+        }
+
+        /* FM display in battle */
+        .forge-mastery-badge {
+            font-size: 0.55rem; color: rgba(192,132,252,0.7);
+            text-align: center; margin-top: 1px;
+        }
 
         /* ===== DRAGON EVOLUTION ===== */
         .detail-evolve-btn {
@@ -1534,24 +1736,40 @@
         <!-- Stat cards -->
         <div class="battle-stat-bars left" id="battleEnemyStats"></div>
         <div class="battle-stat-bars" id="battlePlayerStats"></div>
-        <!-- Turn indicator -->
-        <div class="turn-indicator" id="turnIndicator"></div>
-        <!-- QTE overlay -->
-        <div class="qte-container" id="qteContainer" style="display:none;">
-            <div class="qte-ring-wrap" id="qteRingWrap">
-                <div class="qte-ring" id="qteRing">
-                    <div class="qte-target" id="qteTarget"></div>
-                    <div class="qte-shrink" id="qteShrink"></div>
-                </div>
-                <div class="qte-label" id="qteLabel">TAP!</div>
-                <div class="qte-result-text" id="qteResultText"></div>
-            </div>
+        <!-- Ember indicators (enemy: below enemy stats) -->
+        <div class="forge-embers" id="forgeEmbersEnemy" style="position:absolute;top:calc(13% + 95px);left:4%;z-index:5;min-width:130px;">
+            <div class="forge-ember-dot"></div><div class="forge-ember-dot"></div><div class="forge-ember-dot"></div><div class="forge-ember-dot"></div><div class="forge-ember-dot"></div>
         </div>
+        <!-- Ember indicators (player: above player stats) -->
+        <div class="forge-embers" id="forgeEmbersPlayer" style="position:absolute;bottom:calc(16% + 110px);right:4%;z-index:5;min-width:130px;">
+            <div class="forge-ember-dot"></div><div class="forge-ember-dot"></div><div class="forge-ember-dot"></div><div class="forge-ember-dot"></div><div class="forge-ember-dot"></div>
+        </div>
+        <!-- Personality hint -->
+        <div class="forge-personality-hint" id="forgePersonalityHint"></div>
+        <!-- Wrath screen overlay -->
+        <div class="wrath-overlay" id="wrathOverlay"></div>
+        <!-- Wrath cinematic -->
+        <div class="wrath-cinematic" id="wrathCinematic"><div class="wrath-text">DRAGON'S WRATH</div></div>
         <!-- Result -->
         <div class="battle-result" id="battleResult">
             <div class="battle-result-title" id="battleResultTitle"></div>
             <div id="battleResultReward" style="display:flex;flex-direction:column;align-items:center;"></div>
             <button class="battle-result-btn" id="battleResultBtn">Continue</button>
+        </div>
+        <!-- Forge action buttons -->
+        <div class="forge-actions" id="forgeActions">
+            <button class="forge-btn forge" id="forgeBtnForge" data-action="forge">
+                FORGE<span class="btn-label">+1 ember</span>
+            </button>
+            <button class="forge-btn strike" id="forgeBtnStrike" data-action="strike">
+                STRIKE<span class="btn-label" id="strikeLabel">0.4x</span>
+            </button>
+            <button class="forge-btn roar" id="forgeBtnRoar" data-action="roar">
+                ROAR<span class="btn-label">block</span>
+            </button>
+        </div>
+        <div class="forge-timer" id="forgeTimer" style="display:none;">
+            <div class="forge-timer-bar" id="forgeTimerBar"></div>
         </div>
     </div>
     <div class="battle-log" id="battleLog">Preparing battle...</div>
@@ -1825,26 +2043,47 @@
     }
 
     // ===== Battle stats =====
-    const RARITY_STAT_BONUS = { common: 1.0, uncommon: 1.20, rare: 1.45, epic: 1.75, legendary: 2.10, mythic: 2.60 };
+    // Sigma → total power budget (discrete jumps at tier boundaries, no overlap)
+    function sigmaToPower(sigma) {
+        if (sigma >= 3.5) return 700 + (sigma - 3.5) * 200;  // mythic:    700–900+
+        if (sigma >= 2.5) return 530 + (sigma - 2.5) * 170;  // legendary: 530–700
+        if (sigma >= 2.0) return 400 + (sigma - 2.0) * 260;  // epic:      400–530
+        if (sigma >= 1.5) return 290 + (sigma - 1.5) * 220;  // rare:      290–400
+        if (sigma >= 1.0) return 200 + (sigma - 1.0) * 180;  // uncommon:  200–290
+        return 105 + sigma * 95;                               // common:   105–200
+    }
+
+    // Stat weight targets: HP ~48%, ATK ~20%, DEF ~13%, SPD ~19%
+    const STAT_WEIGHTS = { hp: 0.48, atk: 0.20, def: 0.13, spd: 0.19 };
 
     function computeStats(latent, level) {
         level = level || 1;
+        const rarity = computeRarity(latent);
+        const totalPower = sigmaToPower(rarity.sigma);
+
+        // Chunk norms → proportions for stat distribution
         const chunkSize = 256;
-        const names = ['hp', 'atk', 'def', 'spd'];
-        const raw = {};
+        const chunkNorms = [];
         for (let s = 0; s < 4; s++) {
             let sumSq = 0;
             for (let i = s * chunkSize; i < (s + 1) * chunkSize; i++) sumSq += latent[i] * latent[i];
-            raw[names[s]] = Math.max(0, Math.min(1, (sumSq - 200) / 112));
+            chunkNorms.push(Math.sqrt(sumSq));
         }
-        const rarity = computeRarity(latent);
-        const b = RARITY_STAT_BONUS[rarity.tier];
+        const normTotal = chunkNorms.reduce((a, b) => a + b, 0) || 1;
+        const rawProps = chunkNorms.map(n => n / normTotal); // [0–1], sums to 1
+
+        // Blend 60% from latent proportions + 40% even baseline to prevent extremes
+        const names = ['hp', 'atk', 'def', 'spd'];
+        const blended = names.map((n, i) => 0.4 * STAT_WEIGHTS[n] + 0.6 * rawProps[i] * STAT_WEIGHTS[n] / 0.25);
+        const blendTotal = blended.reduce((a, b) => a + b, 0);
+        const finalProps = blended.map(b => b / blendTotal);
+
         const lvlMul = 1 + (level - 1) * 0.02;
         return {
-            hp:  Math.round((80 + raw.hp * 120) * b * lvlMul),
-            atk: Math.round((10 + raw.atk * 40) * b * lvlMul),
-            def: Math.round((5 + raw.def * 30) * b * lvlMul),
-            spd: Math.round((10 + raw.spd * 40) * b * lvlMul),
+            hp:  Math.round(totalPower * finalProps[0] * lvlMul),
+            atk: Math.round(totalPower * finalProps[1] * lvlMul),
+            def: Math.round(totalPower * finalProps[2] * lvlMul),
+            spd: Math.round(totalPower * finalProps[3] * lvlMul),
             get power() { return this.hp + this.atk + this.def + this.spd; },
             rarity
         };
@@ -2959,17 +3198,7 @@
         try {
             const [, oppData] = await Promise.all([portalPromise, opponentPromise]);
 
-            const rawOpp = computeStats(oppData.latent);
-            // Opponent scales to 1.1-1.35x player power — you need good QTEs to win
-            const targetPower = pStats.power * (1.1 + Math.random() * 0.25);
-            const sf = targetPower / rawOpp.power;
-            const oStats = {
-                hp:  Math.round(rawOpp.hp * sf),
-                atk: Math.round(rawOpp.atk * sf),
-                def: Math.round(rawOpp.def * sf),
-                spd: Math.round(rawOpp.spd * sf),
-                get power() { return this.hp + this.atk + this.def + this.spd; }
-            };
+            const oStats = computeStats(oppData.latent);
             const oppName = generateName(oppData.latent).split(' ')[0];
 
             // Set up arena fully before showing it
@@ -2985,17 +3214,236 @@
         }
     });
 
+    // ===== BREATH FORGE BATTLE ENGINE =====
+    const EMBER_MULTIPLIERS = [0.4, 1.0, 2.3, 3.9, 5.8, 8.0]; // index 0 = snap strike (0 embers)
+
+    function getAIPersonality(stats) {
+        const s = { hp: stats.hp, atk: stats.atk, def: stats.def, spd: stats.spd };
+        const vals = [s.hp, s.atk, s.def, s.spd];
+        const names = ['hp','atk','def','spd'];
+        const sorted = names.map((n,i) => ({n, v: vals[i]})).sort((a,b) => b.v - a.v);
+        const top = sorted[0], second = sorted[1];
+        const ratio = second.v / (top.v || 1);
+        const isHybrid = ratio >= 0.9;
+        let personality, hint;
+        if (isHybrid) {
+            const pair = [top.n, second.n].sort().join('+');
+            const hybridMap = {
+                'atk+spd': { name: 'assassin', hint: 'This dragon moves with deadly precision...' },
+                'atk+def': { name: 'juggernaut', hint: 'This dragon is an armored force...' },
+                'atk+hp': { name: 'warlord', hint: 'This dragon grows fiercer when wounded...' },
+                'def+spd': { name: 'ghost', hint: 'This dragon seems elusive and disruptive...' },
+                'def+hp': { name: 'mountain', hint: 'This dragon is an immovable force...' },
+                'hp+spd': { name: 'survivor', hint: 'This dragon adapts as the battle shifts...' },
+            };
+            const h = hybridMap[pair] || { name: 'balanced', hint: 'This dragon fights unpredictably...' };
+            personality = h.name; hint = h.hint;
+        } else {
+            const primaryMap = {
+                atk: { name: 'berserker', hint: 'This dragon burns with raw fury...' },
+                def: { name: 'fortress', hint: 'This dragon radiates patience...' },
+                spd: { name: 'viper', hint: 'This dragon seems restless...' },
+                hp:  { name: 'titan', hint: 'This dragon watches with quiet menace...' },
+            };
+            const p = primaryMap[top.n];
+            personality = p.name; hint = p.hint;
+        }
+        return { personality, hint, dominant: top.n, second: second.n };
+    }
+
+    function aiChooseAction(personality, aiEmbers, playerEmbers, aiHpPct, turnNum, difficulty) {
+        const r = Math.random();
+        // Difficulty: 0=easy (rigid), 1=medium, 2=hard, 3+=mythic
+        // Higher difficulty = AI better at predicting when player will strike (and blocking)
+        const blockSense = difficulty === 0 ? 0.05 : difficulty === 1 ? 0.15 : difficulty === 2 ? 0.25 : 0.4;
+
+        // If AI has 0 embers, can't roar — must forge or snap-strike
+        if (aiEmbers === 0) {
+            if (personality === 'viper' && playerEmbers >= 2 && r < 0.15) return 'strike';
+            return 'forge';
+        }
+        // If AI has 5 embers, always strike (Dragon's Wrath)
+        if (aiEmbers >= 5) return 'strike';
+
+        // Roar is now a BLOCK — AI roars when it expects player to strike
+        // Player likely to strike when they have high embers
+        const playerStrikeLikely = playerEmbers >= 3 ? 0.4 + blockSense : playerEmbers >= 2 ? 0.2 + blockSense * 0.5 : 0;
+
+        switch (personality) {
+            case 'berserker':
+                if (aiEmbers >= 2 && r < 0.65) return 'strike';
+                if (playerStrikeLikely > 0 && r < playerStrikeLikely * 0.4) return 'roar';
+                return 'forge';
+            case 'fortress':
+                if (aiEmbers >= 4 && r < 0.6) return 'strike';
+                if (playerStrikeLikely > 0 && r < playerStrikeLikely * 0.5) return 'roar';
+                return 'forge';
+            case 'viper':
+                if (aiEmbers >= 1 && r < 0.5) return 'strike';
+                if (playerStrikeLikely > 0 && r < playerStrikeLikely * 0.3) return 'roar';
+                return 'forge';
+            case 'titan':
+                if (aiHpPct <= 0.25) {
+                    if (aiEmbers >= 1) return 'strike';
+                    return 'forge';
+                }
+                if (playerStrikeLikely > 0 && r < playerStrikeLikely * 0.6) return 'roar';
+                if (aiEmbers >= 3 && r < 0.5) return 'strike';
+                return 'forge';
+            case 'assassin':
+                if (aiEmbers >= 2 && r < 0.55) return 'strike';
+                if (playerStrikeLikely > 0 && r < playerStrikeLikely * 0.4) return 'roar';
+                return 'forge';
+            case 'juggernaut':
+                if (playerStrikeLikely > 0 && r < playerStrikeLikely * 0.5) return 'roar';
+                if (aiEmbers >= 3 && r < 0.55) return 'strike';
+                return 'forge';
+            case 'warlord':
+                if (aiHpPct <= 0.25 && aiEmbers >= 1) return 'strike';
+                if (aiEmbers >= 2 && r < 0.5) return 'strike';
+                return 'forge';
+            case 'ghost':
+                // Ghost is the best blocker — reads strikes well
+                if (playerStrikeLikely > 0 && r < playerStrikeLikely * 0.8) return 'roar';
+                if (aiEmbers >= 3 && r < 0.4) return 'strike';
+                return 'forge';
+            case 'mountain':
+                if (playerStrikeLikely > 0 && r < playerStrikeLikely * 0.4) return 'roar';
+                if (aiEmbers >= 4 && r < 0.7) return 'strike';
+                return 'forge';
+            case 'survivor':
+                if (turnNum < 6) {
+                    if (aiEmbers >= 1 && r < 0.45) return 'strike';
+                    return 'forge';
+                }
+                if (playerStrikeLikely > 0 && r < playerStrikeLikely * 0.5) return 'roar';
+                if (aiEmbers >= 3 && r < 0.5) return 'strike';
+                return 'forge';
+            default:
+                if (playerStrikeLikely > 0 && r < playerStrikeLikely * 0.4) return 'roar';
+                if (aiEmbers >= 3 && r < 0.5) return 'strike';
+                return 'forge';
+        }
+    }
+
+    function updateEmberDots(who, count) {
+        const id = who === 'player' ? 'forgeEmbersPlayer' : 'forgeEmbersEnemy';
+        const dots = document.getElementById(id).children;
+        for (let i = 0; i < 5; i++) {
+            dots[i].classList.toggle('lit', i < count);
+        }
+    }
+
+    function clearEmberGlow(imgEl) {
+        imgEl.classList.remove('ember-glow-1','ember-glow-2','ember-glow-3','ember-glow-4','ember-glow-5');
+    }
+
+    function setEmberGlow(imgEl, count) {
+        clearEmberGlow(imgEl);
+        if (count >= 1 && count <= 5) imgEl.classList.add('ember-glow-' + count);
+    }
+
+    function spawnForgeResultText(arena, text, cls) {
+        const el = document.createElement('div');
+        el.className = 'forge-result-text ' + cls;
+        el.textContent = text;
+        arena.appendChild(el);
+        setTimeout(() => el.remove(), 1200);
+    }
+
+    function getPlayerAction() {
+        return new Promise(resolve => {
+            const actions = document.getElementById('forgeActions');
+            const timer = document.getElementById('forgeTimer');
+            const timerBar = document.getElementById('forgeTimerBar');
+            const btns = actions.querySelectorAll('.forge-btn');
+            actions.classList.add('show');
+            timer.style.display = 'block';
+
+            let selected = null;
+            let resolved = false;
+            const TURN_TIME = window.BATTLE_TURN_TIME || 7000;
+            const startTime = Date.now();
+
+            // Remove previous selection
+            btns.forEach(b => b.classList.remove('selected'));
+
+            function selectAction(action) {
+                if (resolved) return;
+                selected = action;
+                btns.forEach(b => {
+                    b.classList.toggle('selected', b.dataset.action === action);
+                });
+                actions.classList.remove('glow-forge', 'glow-strike', 'glow-roar');
+                actions.classList.add('glow-' + action);
+            }
+
+            function finish() {
+                if (resolved) return;
+                resolved = true;
+                clearInterval(tickInterval);
+                btns.forEach(b => {
+                    b.removeEventListener('click', handleClick);
+                    b.classList.remove('selected');
+                });
+                actions.classList.remove('show', 'glow-forge', 'glow-strike', 'glow-roar');
+                timer.style.display = 'none';
+                resolve(selected || 'forge'); // default to forge if no selection
+            }
+
+            function handleClick(e) {
+                const action = e.currentTarget.dataset.action;
+                if (e.currentTarget.classList.contains('disabled')) return;
+                if (selected === action) {
+                    // Double-tap confirms immediately
+                    finish();
+                    return;
+                }
+                selectAction(action);
+            }
+
+            btns.forEach(b => b.addEventListener('click', handleClick));
+
+            const tickInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const pct = Math.max(0, 100 - (elapsed / TURN_TIME * 100));
+                timerBar.style.width = pct + '%';
+                if (elapsed >= TURN_TIME) finish();
+            }, 50);
+        });
+    }
+
+    function calcDamage(atkStat, defStat, embers, isForging, isStaggered, desperationActive, fm) {
+        const emberMul = EMBER_MULTIPLIERS[Math.min(embers, 5)];
+        const desperationBonus = desperationActive ? 0.5 : 0;
+        const defReduction = defStat / (defStat + 50);
+        let dmg = atkStat * (emberMul + desperationBonus) * (1 - defReduction);
+        // Forge vulnerability: +20%, reduced by FM Warm Scales
+        if (isForging) {
+            const fmReduction = Math.min(fm, 3) * 0.05; // FM 1-3: 5% per
+            const forgeAdept = fm >= 16; // FM 16+: no vulnerability
+            if (!forgeAdept) {
+                dmg *= (1.2 - fmReduction);
+            }
+        }
+        if (isStaggered) dmg *= 1.25;
+        return Math.max(1, Math.round(dmg * (0.9 + Math.random() * 0.2)));
+    }
+
     async function runBattle(playerDragon, pStats, oppData, oStats, oppName, isFriend) {
         const arena = document.getElementById('battleArena');
         const log = document.getElementById('battleLog');
         const pName = playerDragon.name.split(' ')[0];
         const playerImg = getDragonImg(playerDragon);
+        const pImgEl = document.getElementById('battlePlayerImg');
+        const eImgEl = document.getElementById('battleEnemyImg');
 
-        document.getElementById('battlePlayerImg').src = playerImg;
-        document.getElementById('battleEnemyImg').src = 'data:image/png;base64,' + oppData.image;
-        document.getElementById('battlePlayerImg').classList.remove('battle-defeat-fade');
-        document.getElementById('battleEnemyImg').classList.remove('battle-defeat-fade');
+        pImgEl.src = playerImg;
+        eImgEl.src = 'data:image/png;base64,' + oppData.image;
+        pImgEl.classList.remove('battle-defeat-fade');
+        eImgEl.classList.remove('battle-defeat-fade');
         document.querySelectorAll('.battle-victory-burst').forEach(el => el.remove());
+        clearEmberGlow(pImgEl); clearEmberGlow(eImgEl);
 
         document.getElementById('battlePlayerName').innerHTML = pName + ' ' + rarityBadgeHTML(playerDragon.latent);
         document.getElementById('battleEnemyName').innerHTML = oppName + ' ' + rarityBadgeHTML(oppData.latent);
@@ -3008,133 +3456,262 @@
         updateHpBar('player', pHp, pMax);
         updateHpBar('enemy', oHp, oMax);
 
+        // Ember state
+        let pEmbers = 0, oEmbers = 0;
+        updateEmberDots('player', 0); updateEmberDots('enemy', 0);
+        let pStaggered = false, oStaggered = false;
+        const playerFM = playerDragon.forge_mastery || 0;
+        const oppFM = 0; // AI opponents don't have FM
+
+        // FM tracking for rewards
+        let fmBonus = 0; // extra FM from reaching 5 embers, wrath kills
+        let reached5Embers = false;
+        let wrathKill = false;
+
+        // AI personality
+        const ai = getAIPersonality(oStats);
+        const oppRarity = computeRarity(oppData.latent);
+        const difficulty = Math.min(3, ['common','uncommon','rare','epic','legendary','mythic'].indexOf(oppRarity.tier));
+
+        // Wrath overlay
+        const wrathOv = document.getElementById('wrathOverlay');
+        wrathOv.classList.remove('active');
+
         log.textContent = '';
         const vs = document.getElementById('battleVs');
         vs.classList.add('show');
         await sleep(1200);
         vs.classList.remove('show');
 
+        // Personality hint
+        const hintEl = document.getElementById('forgePersonalityHint');
+        hintEl.textContent = ai.hint;
+        hintEl.style.opacity = '1';
         log.textContent = isFriend ? 'A challenger approaches!' : oppName + ' wants to spar!';
-        await sleep(1200);
+        await sleep(1800);
+        hintEl.style.opacity = '0';
 
-        // QTE tracking
-        let qteScoreSum = 0, qteTotalCount = 0;
-        const oppRarity = computeRarity(oppData.latent);
-        const difficultyLevel = ['common','uncommon','rare','epic','legendary'].indexOf(oppRarity.tier);
+        let turnNum = 0;
 
-        while (pHp > 0 && oHp > 0) {
-            const playerFirst = pStats.spd >= oStats.spd;
-            const order = playerFirst
-                ? [{ who: 'player', atk: pStats.atk, tDef: oStats.def, name: pName },
-                   { who: 'enemy',  atk: oStats.atk, tDef: pStats.def, name: oppName }]
-                : [{ who: 'enemy',  atk: oStats.atk, tDef: pStats.def, name: oppName },
-                   { who: 'player', atk: pStats.atk, tDef: oStats.def, name: pName }];
-
-            const turnInd = document.getElementById('turnIndicator');
-
-            for (const act of order) {
-                if (pHp <= 0 || oHp <= 0) break;
-
-                // Show turn indicator
-                turnInd.className = 'turn-indicator ' + (act.who === 'player' ? 'player' : 'enemy') + ' active';
-
-                const defReduction = act.tDef / (act.tDef + 50);
-                const baseDmg = act.atk * (1 - defReduction);
-                const variance = 0.85 + Math.random() * 0.3;
-                const isCrit = variance > 1.10;
-
-                // QTE phase
-                let qteGrade = 'miss';
-                let qteMultiplier = 1.0;
-                if (act.who === 'player') {
-                    log.textContent = 'Your turn! Get ready...';
-                    await sleep(400);
-                    const qr = await runQTE('attack', difficultyLevel, oStats);
-                    qteGrade = qr.grade;
-                    qteMultiplier = qr.multiplier;
-                    qteScoreSum += (qr.grade === 'perfect' ? 2 : qr.grade === 'good' ? 1 : 0);
-                    qteTotalCount++;
-                } else {
-                    log.textContent = oppName + ' attacks! Block it!';
-                    await sleep(400);
-                    const qr = await runQTE('defend', difficultyLevel, oStats);
-                    qteGrade = qr.grade;
-                    qteMultiplier = qr.multiplier;
-                    qteScoreSum += (qr.grade === 'perfect' ? 2 : qr.grade === 'good' ? 1 : 0);
-                    qteTotalCount++;
-                }
-
-                // Player missed attack QTE → turn wasted, no damage dealt
-                if (act.who === 'player' && qteGrade === 'miss') {
-                    log.textContent = pName + ' fumbles the attack!';
-                    await sleep(1000);
-                    // still check low HP pulses
-                    const pImg = document.getElementById('battlePlayerImg');
-                    const eImg = document.getElementById('battleEnemyImg');
-                    if (pHp > 0 && pHp / pMax <= 0.25) pImg.classList.add('battle-low-hp');
-                    else pImg.classList.remove('battle-low-hp');
-                    if (oHp > 0 && oHp / oMax <= 0.25) eImg.classList.add('battle-low-hp');
-                    else eImg.classList.remove('battle-low-hp');
-                    continue;
-                }
-
-                const dmg = Math.max(1, Math.round(baseDmg * variance * (act.who === 'player' ? qteMultiplier : qteMultiplier)));
-
-                log.textContent = act.name + ' attacks!';
-
-                const atkImg = document.getElementById(act.who === 'player' ? 'battlePlayerImg' : 'battleEnemyImg');
-                atkImg.classList.add('battle-attacking');
-                await sleep(500);
-                atkImg.classList.remove('battle-attacking');
-
-                const targetWho = act.who === 'player' ? 'enemy' : 'player';
-                const targetImg = document.getElementById(targetWho === 'player' ? 'battlePlayerImg' : 'battleEnemyImg');
-                const targetParent = targetWho === 'player' ? 'battlePlayer' : 'battleEnemy';
-
-                targetImg.classList.add('battle-hit', 'battle-knockback');
-                spawnDamageNumber(targetParent, dmg, isCrit);
-                spawnSlash(targetParent);
-                arena.classList.add(isCrit ? 'shake-hard' : 'shake');
-
-                if (act.who === 'player') {
-                    oHp = Math.max(0, oHp - dmg);
-                    updateHpBar('enemy', oHp, oMax);
-                    const prefix = qteMultiplier >= 1.5 ? 'PERFECT! ' : '';
-                    log.textContent = prefix + pName + (isCrit ? ' lands a CRITICAL HIT for ' : ' deals ') + dmg + ' damage!';
-                } else {
-                    pHp = Math.max(0, pHp - dmg);
-                    updateHpBar('player', pHp, pMax);
-                    const prefix = qteGrade === 'perfect' ? 'Blocked! ' : qteGrade === 'good' ? 'Partial block! ' : '';
-                    log.textContent = prefix + oppName + (isCrit ? ' lands a CRITICAL HIT for ' : ' deals ') + dmg + ' damage!';
-                }
-
-                await sleep(300);
-                targetImg.classList.remove('battle-hit', 'battle-knockback');
-                arena.classList.remove('shake', 'shake-hard');
-
-                // Low HP danger pulse
-                const pImg = document.getElementById('battlePlayerImg');
-                const eImg = document.getElementById('battleEnemyImg');
-                if (pHp > 0 && pHp / pMax <= 0.25) pImg.classList.add('battle-low-hp');
-                else pImg.classList.remove('battle-low-hp');
-                if (oHp > 0 && oHp / oMax <= 0.25) eImg.classList.add('battle-low-hp');
-                else eImg.classList.remove('battle-low-hp');
-
-                await sleep(800);
-            }
+        // Update roar button and strike label
+        function updateButtons() {
+            const roarBtn = document.getElementById('forgeBtnRoar');
+            roarBtn.classList.toggle('disabled', pEmbers < 1);
+            const mul = EMBER_MULTIPLIERS[Math.min(pEmbers, 5)];
+            const despBonus = (pHp / pMax <= 0.25) ? 0.5 : 0;
+            document.getElementById('strikeLabel').textContent = (mul + despBonus).toFixed(1) + 'x';
+            // Wrath screen effect at 5 embers
+            wrathOv.classList.toggle('active', pEmbers >= 5 || oEmbers >= 5);
         }
 
-        // Hide turn indicator
-        document.getElementById('turnIndicator').className = 'turn-indicator';
+        while (pHp > 0 && oHp > 0) {
+            turnNum++;
+            const playerFirst = pStats.spd >= oStats.spd;
 
-        // Battle over — report to server
+            // Quick Ignition check (FM 4-6+)
+            const quickIgnitionChance = playerFM >= 4 ? (Math.min(playerFM, 6) - 3) * 0.08 : 0;
+
+            updateButtons();
+            log.textContent = 'Choose your action...';
+
+            // Player chooses
+            const playerAction = await getPlayerAction();
+
+            // AI chooses simultaneously
+            const aiAction = aiChooseAction(ai.personality, oEmbers, pEmbers, oHp / oMax, turnNum, difficulty);
+
+            // === Simultaneous resolution with interactions ===
+            // STRIKE vs ROAR = blocked. STRIKE vs FORGE = hits vulnerable. FORGE vs ROAR = roar wasted.
+            const pAct = playerAction;
+            const oAct = aiAction;
+            const playerBlocked = (pAct === 'strike' && oAct === 'roar');
+            const enemyBlocked = (oAct === 'strike' && pAct === 'roar');
+
+            // --- Player action ---
+            if (pAct === 'forge') {
+                let gain = 1;
+                if (quickIgnitionChance > 0 && Math.random() < quickIgnitionChance) gain = 2;
+                pEmbers = Math.min(5, pEmbers + gain);
+                updateEmberDots('player', pEmbers);
+                setEmberGlow(pImgEl, pEmbers);
+                spawnForgeResultText(arena, gain > 1 ? 'DOUBLE FORGE!' : 'FORGE +' + gain, 'forge-text');
+                log.textContent = pName + ' forges inner flame!' + (gain > 1 ? ' Quick Ignition!' : '');
+                if (pEmbers === 5 && !reached5Embers) { reached5Embers = true; fmBonus++; }
+            } else if (pAct === 'strike') {
+                if (playerBlocked) {
+                    // Enemy roared — our strike is blocked
+                    const isWrath = pEmbers >= 5;
+                    const retainEmber = isWrath && playerFM >= 13;
+                    pEmbers = retainEmber ? 1 : 0;
+                    updateEmberDots('player', pEmbers);
+                    setEmberGlow(pImgEl, pEmbers);
+                    pImgEl.classList.add('battle-attacking');
+                    await sleep(400);
+                    pImgEl.classList.remove('battle-attacking');
+                    spawnForgeResultText(arena, 'BLOCKED!', 'roar-text');
+                    log.textContent = oppName + ' roars! ' + pName + "'s strike is blocked!";
+                    eImgEl.classList.add('staggered');
+                    arena.classList.add('shake');
+                    await sleep(400);
+                    eImgEl.classList.remove('staggered');
+                    arena.classList.remove('shake');
+                } else {
+                    // Strike lands
+                    const isWrath = pEmbers >= 5;
+                    const desperationActive = pHp / pMax <= 0.25;
+                    const targetForging = oAct === 'forge';
+                    if (isWrath) {
+                        const cin = document.getElementById('wrathCinematic');
+                        cin.classList.add('show');
+                        await sleep(800);
+                        const flash = document.createElement('div');
+                        flash.className = 'wrath-flash';
+                        cin.appendChild(flash);
+                        await sleep(600);
+                        cin.classList.remove('show');
+                        flash.remove();
+                    }
+                    const dmg = calcDamage(pStats.atk, oStats.def, pEmbers, targetForging, false, desperationActive, playerFM);
+                    const retainEmber = isWrath && playerFM >= 13;
+                    pEmbers = retainEmber ? 1 : 0;
+                    updateEmberDots('player', pEmbers);
+                    setEmberGlow(pImgEl, pEmbers);
+                    pImgEl.classList.add('battle-attacking');
+                    await sleep(400);
+                    pImgEl.classList.remove('battle-attacking');
+                    eImgEl.classList.add('battle-hit', 'battle-knockback');
+                    spawnDamageNumber('battleEnemy', dmg, isWrath);
+                    spawnSlash('battleEnemy');
+                    arena.classList.add(isWrath ? 'shake-hard' : 'shake');
+                    oHp = Math.max(0, oHp - dmg);
+                    updateHpBar('enemy', oHp, oMax);
+                    const prefix = isWrath ? "DRAGON'S WRATH! " : '';
+                    log.textContent = prefix + pName + ' strikes for ' + dmg + '!' + (targetForging ? ' Caught forging!' : '');
+                    spawnForgeResultText(arena, isWrath ? "WRATH! -" + dmg : "STRIKE -" + dmg, 'strike-text');
+                    if (isWrath && oHp <= 0) { wrathKill = true; fmBonus++; }
+                    await sleep(300);
+                    eImgEl.classList.remove('battle-hit', 'battle-knockback');
+                    arena.classList.remove('shake', 'shake-hard');
+                }
+            } else if (pAct === 'roar') {
+                pEmbers = Math.max(0, pEmbers - 1);
+                updateEmberDots('player', pEmbers);
+                setEmberGlow(pImgEl, pEmbers);
+                if (enemyBlocked) {
+                    // We blocked their strike — handled in enemy section
+                    spawnForgeResultText(arena, 'BLOCKED!', 'roar-text');
+                    log.textContent = pName + ' roars! Blocks ' + oppName + "'s strike!";
+                    pImgEl.classList.add('staggered');
+                    arena.classList.add('shake');
+                    await sleep(400);
+                    pImgEl.classList.remove('staggered');
+                    arena.classList.remove('shake');
+                } else {
+                    // Roar vs forge or roar — wasted, just costs ember
+                    spawnForgeResultText(arena, 'ROAR!', 'roar-text');
+                    log.textContent = pName + ' roars!' + (oAct === 'forge' ? ' But ' + oppName + ' was forging...' : '');
+                    await sleep(400);
+                }
+            }
+
+            await sleep(300);
+            if (pHp <= 0 || oHp <= 0) { /* skip enemy resolve if dead */ }
+            else {
+
+            // --- Enemy action ---
+            if (oAct === 'forge') {
+                oEmbers = Math.min(5, oEmbers + 1);
+                updateEmberDots('enemy', oEmbers);
+                setEmberGlow(eImgEl, oEmbers);
+                if (pAct !== 'strike') {
+                    log.textContent = oppName + ' forges its inner flame...';
+                }
+                spawnForgeResultText(arena, 'FORGE +1', 'forge-text');
+            } else if (oAct === 'strike') {
+                if (enemyBlocked) {
+                    // Player roared — enemy strike blocked, embers consumed
+                    oEmbers = 0;
+                    updateEmberDots('enemy', oEmbers);
+                    setEmberGlow(eImgEl, oEmbers);
+                    // Visual already handled in player roar section
+                } else {
+                    // Strike lands
+                    const isWrath = oEmbers >= 5;
+                    const desperationActive = oHp / oMax <= 0.25;
+                    const targetForging = pAct === 'forge';
+                    if (isWrath) {
+                        const cin = document.getElementById('wrathCinematic');
+                        cin.classList.add('show');
+                        await sleep(800);
+                        const flash = document.createElement('div');
+                        flash.className = 'wrath-flash';
+                        cin.appendChild(flash);
+                        await sleep(600);
+                        cin.classList.remove('show');
+                        flash.remove();
+                    }
+                    const dmg = calcDamage(oStats.atk, pStats.def, oEmbers, targetForging, false, desperationActive, oppFM);
+                    oEmbers = 0;
+                    updateEmberDots('enemy', oEmbers);
+                    setEmberGlow(eImgEl, oEmbers);
+                    eImgEl.classList.add('battle-attacking');
+                    await sleep(400);
+                    eImgEl.classList.remove('battle-attacking');
+                    pImgEl.classList.add('battle-hit', 'battle-knockback');
+                    spawnDamageNumber('battlePlayer', dmg, isWrath);
+                    spawnSlash('battlePlayer');
+                    arena.classList.add(isWrath ? 'shake-hard' : 'shake');
+                    pHp = Math.max(0, pHp - dmg);
+                    updateHpBar('player', pHp, pMax);
+                    const prefix = isWrath ? "DRAGON'S WRATH! " : '';
+                    log.textContent = prefix + oppName + ' strikes for ' + dmg + '!' + (targetForging ? ' Caught forging!' : '');
+                    spawnForgeResultText(arena, isWrath ? "WRATH! -" + dmg : "STRIKE -" + dmg, 'strike-text');
+                    await sleep(300);
+                    pImgEl.classList.remove('battle-hit', 'battle-knockback');
+                    arena.classList.remove('shake', 'shake-hard');
+                }
+            } else if (oAct === 'roar') {
+                oEmbers = Math.max(0, oEmbers - 1);
+                updateEmberDots('enemy', oEmbers);
+                setEmberGlow(eImgEl, oEmbers);
+                if (playerBlocked) {
+                    // Enemy blocked our strike — visual already handled
+                } else {
+                    if (pAct !== 'roar') {
+                        log.textContent = oppName + ' roars!' + (pAct === 'forge' ? ' But you were forging...' : '');
+                    }
+                    spawnForgeResultText(arena, 'ROAR!', 'roar-text');
+                    await sleep(400);
+                }
+            }
+
+            } // end else (not dead)
+
+            // Low HP danger pulse
+            if (pHp > 0 && pHp / pMax <= 0.25) pImgEl.classList.add('battle-low-hp');
+            else pImgEl.classList.remove('battle-low-hp');
+            if (oHp > 0 && oHp / oMax <= 0.25) eImgEl.classList.add('battle-low-hp');
+            else eImgEl.classList.remove('battle-low-hp');
+
+            await sleep(500);
+
+            updateButtons();
+            await sleep(300);
+        }
+
+        // Clean up
+        wrathOv.classList.remove('active');
+        clearEmberGlow(pImgEl); clearEmberGlow(eImgEl);
+        document.getElementById('forgeActions').classList.remove('show');
+
+        // Battle over
         const won = pHp > 0;
-        const xpBonus = qteTotalCount > 0 ? Math.round((qteScoreSum / (qteTotalCount * 2)) * 50) : 0;
+        const xpBonus = Math.min(50, turnNum * 3 + (reached5Embers ? 15 : 0) + (wrathKill ? 10 : 0));
 
         try {
             const resp = await authFetch('/api/battle/result', {
                 method: 'POST',
-                body: JSON.stringify({ dragon_id: playerDragon.id, won, xp_bonus: xpBonus })
+                body: JSON.stringify({ dragon_id: playerDragon.id, won, xp_bonus: xpBonus, fm_bonus: fmBonus })
             });
             const resultData = await resp.json();
 
@@ -3142,29 +3719,27 @@
             const resultTitle = document.getElementById('battleResultTitle');
             const resultReward = document.getElementById('battleResultReward');
 
-            // Clear danger pulse
-            document.getElementById('battlePlayerImg').classList.remove('battle-low-hp');
-            document.getElementById('battleEnemyImg').classList.remove('battle-low-hp');
+            pImgEl.classList.remove('battle-low-hp');
+            eImgEl.classList.remove('battle-low-hp');
 
             if (won) {
                 log.textContent = oppName + ' has been defeated!';
                 const burst = document.createElement('div');
                 burst.className = 'battle-victory-burst';
                 arena.appendChild(burst);
-                document.getElementById('battleEnemyImg').classList.add('battle-defeat-fade');
-                document.getElementById('battlePlayerImg').classList.add('battle-winner-pulse');
+                eImgEl.classList.add('battle-defeat-fade');
+                pImgEl.classList.add('battle-winner-pulse');
 
                 resultTitle.textContent = 'VICTORY!';
                 resultTitle.className = 'battle-result-title win';
 
-                // Update local dragon XP/level
                 const dragonIdx = dragons.findIndex(d => d.id === playerDragon.id);
                 if (dragonIdx >= 0) {
                     dragons[dragonIdx].xp = resultData.new_xp || 0;
                     dragons[dragonIdx].level = resultData.new_level || 1;
+                    dragons[dragonIdx].forge_mastery = resultData.new_fm || 0;
                 }
 
-                // Add the new egg to local state
                 const wonEggType = resultData.egg_type || 'random';
                 if (resultData.egg_id) {
                     eggs.push({ id: resultData.egg_id, type: wonEggType, latent: null, parent1_id: null, parent2_id: null, hatch_ready_at: resultData.hatch_ready_at || null });
@@ -3174,14 +3749,16 @@
                 const rewardEggImg = isGoldenReward ? '/static/assets/goldegg.png' : '/static/assets/egg1.png';
                 const rewardLabel = isGoldenReward ? 'You earned a <span style="color:#f59e0b;font-weight:800;">GOLDEN EGG!</span>' : 'You earned a wild egg!';
                 const xpGained = resultData.xp_gained || 0;
+                const fmGained = resultData.fm_gained || 0;
                 const leveledUp = resultData.leveled_up || false;
                 resultReward.innerHTML = '<div style="color:#6ee7b7;font-size:0.85rem;margin-bottom:4px;text-align:center;">' + rewardLabel + '</div>'
                     + '<div style="text-align:center;"><img class="battle-result-egg" src="' + rewardEggImg + '"></div>'
                     + '<div style="color:#f59e0b;font-size:0.8rem;margin-top:8px;text-align:center;font-weight:700;">+' + xpGained + ' XP</div>'
+                    + '<div style="color:#c084fc;font-size:0.75rem;margin-top:4px;text-align:center;">+' + fmGained + ' Forge Mastery</div>'
                     + (leveledUp ? '<div class="level-up-text">LEVEL UP! Lv.' + (resultData.new_level || '') + '</div>' : '');
             } else {
                 log.textContent = pName + ' has fallen...';
-                document.getElementById('battlePlayerImg').classList.add('battle-defeat-fade');
+                pImgEl.classList.add('battle-defeat-fade');
 
                 resultTitle.textContent = 'DEFEAT';
                 resultTitle.className = 'battle-result-title lose';
@@ -3206,8 +3783,14 @@
         }
         document.getElementById('battleOverlay').classList.remove('active');
         document.querySelectorAll('.battle-victory-burst').forEach(el => el.remove());
-        document.getElementById('battleEnemyImg').classList.remove('battle-defeat-fade', 'battle-low-hp');
-        document.getElementById('battlePlayerImg').classList.remove('battle-defeat-fade', 'battle-low-hp', 'battle-winner-pulse');
+        const eImg = document.getElementById('battleEnemyImg');
+        const pImg = document.getElementById('battlePlayerImg');
+        eImg.classList.remove('battle-defeat-fade', 'battle-low-hp');
+        pImg.classList.remove('battle-defeat-fade', 'battle-low-hp', 'battle-winner-pulse');
+        clearEmberGlow(pImg); clearEmberGlow(eImg);
+        updateEmberDots('player', 0); updateEmberDots('enemy', 0);
+        document.getElementById('wrathOverlay').classList.remove('active');
+        document.getElementById('forgeActions').classList.remove('show');
         document.getElementById('battleResult').classList.remove('show');
         battling = false;
         render();
@@ -3272,153 +3855,7 @@
         });
     }
 
-    // ===== QTE SYSTEM =====
-    // difficulty: 0-4 (common-legendary)
-    // oppStats: { hp, atk, def, spd } — used to vary ring size, speed, and position
-    function runQTE(type, difficulty, oppStats) {
-        return new Promise((resolve) => {
-            const container = document.getElementById('qteContainer');
-            const wrap = document.getElementById('qteRingWrap');
-            const ring = document.getElementById('qteRing');
-            const target = document.getElementById('qteTarget');
-            const shrink = document.getElementById('qteShrink');
-            const label = document.getElementById('qteLabel');
-            const resultEl = document.getElementById('qteResultText');
-
-            container.style.display = 'block';
-            label.textContent = type === 'attack' ? 'TAP TO ATTACK!' : 'TAP TO BLOCK!';
-            resultEl.textContent = '';
-            resultEl.className = 'qte-result-text';
-
-            // --- Dynamic sizing based on opponent DEF (attack) or ATK (defend) ---
-            // Tougher opponent stat = smaller rings = harder to hit
-            const relevantStat = type === 'attack' ? (oppStats ? oppStats.def : 15) : (oppStats ? oppStats.atk : 20);
-            // Ring outer size: 180px for weak opponents, down to 90px for strong ones
-            const outerSize = Math.round(Math.max(90, 180 - relevantStat * 1.5));
-            // Target size: proportionally smaller (roughly 1/3 of outer)
-            const targetSize = Math.round(Math.max(24, outerSize * 0.33));
-
-            ring.style.width = outerSize + 'px';
-            ring.style.height = outerSize + 'px';
-            target.style.width = targetSize + 'px';
-            target.style.height = targetSize + 'px';
-
-            // --- Dynamic speed based on opponent SPD + difficulty ---
-            // Faster opponent = shorter window
-            const spdFactor = oppStats ? oppStats.spd : 25;
-            const duration = Math.max(600, 1600 - difficulty * 120 - spdFactor * 6);
-
-            // --- Dynamic position based on opponent stats ---
-            // Use a hash of the current time + difficulty to pick a zone, so it varies each turn
-            const arena = document.getElementById('battleArena');
-            const aw = arena.offsetWidth || 360;
-            const ah = arena.offsetHeight || 600;
-            // Keep ring within safe area (padding from edges)
-            const pad = outerSize / 2 + 30;
-            const zones = [
-                { x: 0.25, y: 0.35 },  // top-left area
-                { x: 0.75, y: 0.35 },  // top-right area
-                { x: 0.50, y: 0.50 },  // center
-                { x: 0.30, y: 0.65 },  // bottom-left area
-                { x: 0.70, y: 0.65 },  // bottom-right area
-                { x: 0.50, y: 0.30 },  // top-center
-                { x: 0.50, y: 0.70 },  // bottom-center
-                { x: 0.20, y: 0.50 },  // mid-left
-                { x: 0.80, y: 0.50 },  // mid-right
-            ];
-            // Pick zone: harder opponents use more positions, easier ones stay more centered
-            const availableZones = Math.min(zones.length, 3 + difficulty * 2);
-            const zoneIdx = Math.floor(Math.random() * availableZones);
-            const zone = zones[zoneIdx];
-            const px = Math.max(pad, Math.min(aw - pad, zone.x * aw));
-            const py = Math.max(pad, Math.min(ah - pad, zone.y * ah));
-
-            wrap.style.left = px + 'px';
-            wrap.style.top = py + 'px';
-
-            const startTime = Date.now();
-            let resolved = false;
-
-            // Reset and animate shrinking ring
-            shrink.style.transition = 'none';
-            shrink.style.width = outerSize + 'px';
-            shrink.style.height = outerSize + 'px';
-            shrink.offsetHeight;
-            shrink.style.transition = 'width ' + duration + 'ms linear, height ' + duration + 'ms linear';
-            shrink.style.width = '0px';
-            shrink.style.height = '0px';
-
-            // --- Perfect window narrows with difficulty ---
-            const perfectLo = 0.58 + difficulty * 0.02;  // 0.58 → 0.66
-            const perfectHi = 0.86 - difficulty * 0.02;  // 0.86 → 0.78
-            const goodLo = 0.38 + difficulty * 0.01;      // 0.38 → 0.42
-            const goodHi = 0.96 - difficulty * 0.01;      // 0.96 → 0.92
-
-            function finishQTE(result) {
-                if (resolved) return;
-                resolved = true;
-                container.removeEventListener('click', handleTap);
-                container.removeEventListener('touchstart', handleTouch);
-                clearTimeout(timeoutId);
-
-                resultEl.textContent = result.label;
-                resultEl.className = 'qte-result-text ' + result.grade;
-
-                setTimeout(() => {
-                    container.style.display = 'none';
-                    resolve(result);
-                }, 500);
-            }
-
-            function isTapOnTarget(clientX, clientY) {
-                const rect = target.getBoundingClientRect();
-                const cx = rect.left + rect.width / 2;
-                const cy = rect.top + rect.height / 2;
-                const r = rect.width / 2;
-                const dx = clientX - cx;
-                const dy = clientY - cy;
-                return (dx * dx + dy * dy) <= r * r;
-            }
-
-            function evaluateTap() {
-                const elapsed = Date.now() - startTime;
-                const progress = elapsed / duration;
-                if (progress >= perfectLo && progress <= perfectHi) {
-                    return { grade: 'perfect', multiplier: type === 'attack' ? 1.5 : 0.5, label: 'PERFECT!' };
-                } else if (progress >= goodLo && progress <= goodHi) {
-                    return { grade: 'good', multiplier: type === 'attack' ? 1.0 : 0.75, label: 'GOOD' };
-                } else {
-                    return { grade: 'miss', multiplier: type === 'attack' ? 0 : 1.0, label: 'MISS' };
-                }
-            }
-
-            function handleTap(e) {
-                e.preventDefault();
-                if (isTapOnTarget(e.clientX, e.clientY)) {
-                    finishQTE(evaluateTap());
-                } else {
-                    // Tapped outside the target — instant miss
-                    finishQTE({ grade: 'miss', multiplier: type === 'attack' ? 0 : 1.0, label: 'MISS' });
-                }
-            }
-            function handleTouch(e) {
-                e.preventDefault();
-                const t = e.touches[0];
-                if (isTapOnTarget(t.clientX, t.clientY)) {
-                    finishQTE(evaluateTap());
-                } else {
-                    finishQTE({ grade: 'miss', multiplier: type === 'attack' ? 0 : 1.0, label: 'MISS' });
-                }
-            }
-
-            container.addEventListener('click', handleTap);
-            container.addEventListener('touchstart', handleTouch, { passive: false });
-
-            const timeoutId = setTimeout(() => {
-                finishQTE({ grade: 'miss', multiplier: type === 'attack' ? 0 : 1.0, label: 'MISS' });
-            }, duration + 200);
-        });
-    }
+    // QTE system removed — replaced by Breath Forge above
 
     // ===== WARMING MINIGAME =====
     let warmingEgg = null;
@@ -3624,6 +4061,7 @@
             const cfg = await resp.json();
             GOOGLE_CLIENT_ID = cfg.google_client_id;
             if (cfg.max_dragons) MAX_DRAGONS = cfg.max_dragons;
+            if (cfg.battle_turn_time_ms) window.BATTLE_TURN_TIME = cfg.battle_turn_time_ms;
         } catch (e) { return; }
         if (!GOOGLE_CLIENT_ID) return;
         // Wait for GSI library to load

@@ -75,6 +75,12 @@ def init_db():
         except sqlite3.OperationalError:
             pass
 
+    # Forge Mastery migration
+    try:
+        db.execute("ALTER TABLE dragons ADD COLUMN forge_mastery INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+
     # Egg incubation migrations
     for col in [
         "ALTER TABLE eggs ADD COLUMN hatch_ready_at TEXT",
@@ -219,7 +225,7 @@ def get_dragons(user_id: int) -> list[dict]:
     """Get all dragons for a user."""
     db = get_db()
     rows = db.execute(
-        "SELECT id, latent, name, parent1_id, parent2_id, received, xp, level, evolution FROM dragons WHERE user_id = ? ORDER BY id",
+        "SELECT id, latent, name, parent1_id, parent2_id, received, xp, level, evolution, forge_mastery FROM dragons WHERE user_id = ? ORDER BY id",
         (user_id,),
     ).fetchall()
     return [
@@ -233,6 +239,7 @@ def get_dragons(user_id: int) -> list[dict]:
             "xp": r["xp"] or 0,
             "level": r["level"] or 1,
             "evolution": r["evolution"] or 0,
+            "forge_mastery": r["forge_mastery"] or 0,
         }
         for r in rows
     ]
@@ -242,7 +249,7 @@ def get_dragon(dragon_id: int, user_id: int) -> dict | None:
     """Get a single dragon owned by user."""
     db = get_db()
     r = db.execute(
-        "SELECT id, latent, name, parent1_id, parent2_id, received, xp, level, evolution FROM dragons WHERE id = ? AND user_id = ?",
+        "SELECT id, latent, name, parent1_id, parent2_id, received, xp, level, evolution, forge_mastery FROM dragons WHERE id = ? AND user_id = ?",
         (dragon_id, user_id),
     ).fetchone()
     if r is None:
@@ -257,6 +264,7 @@ def get_dragon(dragon_id: int, user_id: int) -> dict | None:
         "xp": r["xp"] or 0,
         "level": r["level"] or 1,
         "evolution": r["evolution"] or 0,
+        "forge_mastery": r["forge_mastery"] or 0,
     }
 
 
@@ -383,6 +391,24 @@ def award_xp(dragon_id: int, user_id: int, xp_amount: int) -> dict | None:
     )
     db.commit()
     return {"xp": xp, "level": level, "leveled_up": level > old_level}
+
+
+def award_forge_mastery(dragon_id: int, user_id: int, fm_amount: int) -> int | None:
+    """Award Forge Mastery to a dragon. Returns new FM value, capped at 20."""
+    db = get_db()
+    r = db.execute(
+        "SELECT forge_mastery FROM dragons WHERE id = ? AND user_id = ?",
+        (dragon_id, user_id),
+    ).fetchone()
+    if r is None:
+        return None
+    new_fm = min(20, (r["forge_mastery"] or 0) + fm_amount)
+    db.execute(
+        "UPDATE dragons SET forge_mastery = ? WHERE id = ? AND user_id = ?",
+        (new_fm, dragon_id, user_id),
+    )
+    db.commit()
+    return new_fm
 
 
 # --- Egg warming ---

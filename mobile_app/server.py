@@ -36,6 +36,7 @@ MAX_DRAGONS = CONFIG["dragons"]["max_dragons"]
 RANDOM_HATCH_MINUTES = CONFIG["eggs"]["random_hatch_minutes"]
 BRED_HATCH_MINUTES = CONFIG["eggs"]["bred_hatch_minutes"]
 GOLDEN_CHANCE = CONFIG["eggs"]["golden_chance_percent"] / 100.0
+BATTLE_TURN_TIME_MS = CONFIG.get("battle", {}).get("turn_time_ms", 7000)
 
 # Dragon name generation (ported from frontend)
 NAME_PREFIXES = [
@@ -318,6 +319,20 @@ def hatch(req: HatchRequest, request: Request):
         parent1_id=egg["parent1_id"],
         parent2_id=egg["parent2_id"],
     )
+
+    # FM inheritance for bred eggs: offspring = floor((p1_fm + p2_fm) / 3)
+    inherited_fm = 0
+    if egg["type"] == "bred" and egg["parent1_id"]:
+        p1 = bbdd.get_dragon(egg["parent1_id"], user["id"])
+        p1_fm = p1.get("forge_mastery", 0) if p1 else 0
+        p2_fm = 0
+        if egg["parent2_id"]:
+            p2 = bbdd.get_dragon(egg["parent2_id"], user["id"])
+            p2_fm = p2.get("forge_mastery", 0) if p2 else 0
+        inherited_fm = (p1_fm + p2_fm) // 3
+        if inherited_fm > 0:
+            bbdd.award_forge_mastery(dragon_id, user["id"], inherited_fm)
+
     bbdd.delete_egg(req.egg_id, user["id"])
 
     return {
@@ -327,6 +342,7 @@ def hatch(req: HatchRequest, request: Request):
         "name": name,
         "parent1_id": egg["parent1_id"],
         "parent2_id": egg["parent2_id"],
+        "forge_mastery": inherited_fm,
     }
 
 
@@ -438,11 +454,12 @@ class BattleResultRequest(BaseModel):
     dragon_id: int
     won: bool
     xp_bonus: int = 0
+    fm_bonus: int = 0  # Forge Mastery bonus (reached 5 embers, wrath kill, etc.)
 
 
 @app.post("/api/battle/result")
 def battle_result(req: BattleResultRequest, request: Request):
-    """Record battle result. Win: earn XP + random egg. Lose: dragon dies."""
+    """Record battle result. Win: earn XP + FM + random egg. Lose: dragon dies."""
     user = get_current_user(request)
 
     dragon = bbdd.get_dragon(req.dragon_id, user["id"])
@@ -452,6 +469,9 @@ def battle_result(req: BattleResultRequest, request: Request):
     if req.won:
         xp_amount = 50 + min(max(req.xp_bonus, 0), 50)
         xp_result = bbdd.award_xp(req.dragon_id, user["id"], xp_amount)
+        # FM: +1 for win, plus any bonus from reaching 5 embers / wrath kills
+        fm_gain = 1 + min(max(req.fm_bonus, 0), 2)
+        new_fm = bbdd.award_forge_mastery(req.dragon_id, user["id"], fm_gain)
         egg_type = "golden" if random.random() < GOLDEN_CHANCE else "random"
         egg_result = bbdd.create_egg(user["id"], egg_type, random_hatch_minutes=RANDOM_HATCH_MINUTES, bred_hatch_minutes=BRED_HATCH_MINUTES)
         return {
@@ -463,6 +483,8 @@ def battle_result(req: BattleResultRequest, request: Request):
             "new_xp": xp_result["xp"] if xp_result else 0,
             "new_level": xp_result["level"] if xp_result else 1,
             "leveled_up": xp_result["leveled_up"] if xp_result else False,
+            "fm_gained": fm_gain,
+            "new_fm": new_fm or 0,
         }
     else:
         bbdd.delete_dragon(req.dragon_id, user["id"])
@@ -544,7 +566,7 @@ def evolve_dragon(dragon_id: int, request: Request):
 @app.get("/api/config")
 def get_config():
     """Return public config to the frontend."""
-    return {"google_client_id": GOOGLE_CLIENT_ID, "max_dragons": MAX_DRAGONS}
+    return {"google_client_id": GOOGLE_CLIENT_ID, "max_dragons": MAX_DRAGONS, "battle_turn_time_ms": BATTLE_TURN_TIME_MS}
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
