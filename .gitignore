@@ -1,0 +1,20 @@
+dragons/*.png
+*.jpg
+*.gif
+*.jpeg
+*.png
+*.pth
+
+# Secrets — never commit
+.env
+*.pem
+
+# Local database (contains real user accounts, password hashes and session tokens)
+dyno.db
+dyno.db-shm
+dyno.db-wal
+
+# Python caches / envs
+__pycache__/
+*.py[oc]
+.venv/
