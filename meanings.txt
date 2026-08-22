@@ -1,0 +1,7 @@
+vae total 1 modelo pequeño
+vae total 2 modelo grande con sigmoid y normalize 05
+vae total 3 modelo grande con simgoid y sin normalize 05
+vae total 4 continuacion del anterior pero claro resetando bera scheduler *mejorhasta la feccha* Ya estaba entrenando en beta=1. Continnuar entreno con beta=1
+vae total 5 continuacion del anterior pero poniendo start epoch 
+vae total 6 idem
+vae total 7 idem
