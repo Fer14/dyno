@@ -16,8 +16,7 @@
 
 ---
 
-<!-- VIDEO SLOT: app.mp4 — replace this line with the user-attachments URL on its own line -->
-[▶ Watch the demo](video/app.mp4)
+https://github.com/user-attachments/assets/d281df8b-551f-4b8e-856b-0f97d881d0d4
 
 DYNO has no sprite sheet. Every dragon you will ever see is a **1024-dimensional vector** decoded on demand by a Variational Autoencoder trained on ~7,400 dragons that a diffusion model hallucinated from a single hand-drawn original.
 
@@ -84,8 +83,7 @@ Because the direction is untouched, the dragon keeps its visual identity but its
 
 ## Breeding
 
-<!-- VIDEO SLOT: breed.mp4 — replace this line with the user-attachments URL on its own line -->
-[▶ Watch breeding](video/breed.mp4)
+https://github.com/user-attachments/assets/6194b78c-33fb-4a73-8d1e-50db306db503
 
 Pick two dragons. The server interpolates their latents:
 
@@ -124,8 +122,7 @@ On decode the latent is dequantized and then **rescaled back to the stored norm*
 
 ## Battles
 
-<!-- VIDEO SLOT: battle.mp4 — replace this line with the user-attachments URL on its own line -->
-[▶ Watch a battle](video/battle.mp4)
+https://github.com/user-attachments/assets/7e588c5d-3bdf-48cd-aa62-9830caa20a1a
 
 Battles are **Breath Forge**: a simultaneous-reveal mind game, not a stat comparison. Each turn you and your opponent secretly pick one of three actions and they resolve together.
 
