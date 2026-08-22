@@ -18,3 +18,6 @@ dyno.db-wal
 __pycache__/
 *.py[oc]
 .venv/
+
+# Model weights — too large for git, export with vae/convert.ipynb
+*.onnx
