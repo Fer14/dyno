@@ -81,7 +81,7 @@ Because the direction is untouched, the dragon keeps its visual identity but its
 
 ## Breeding
 
-<video src="https://github.com/Fer14/dragon/raw/main/video/breed.mp4" controls muted width="100%"></video>
+<video src="https://github.com/Fer14/dyno/raw/mobile-app/video/breed.mp4" controls muted width="100%"></video>
 
 > If the player above doesn't load, watch [`video/breed.mp4`](video/breed.mp4).
 
@@ -122,7 +122,7 @@ On decode the latent is dequantized and then **rescaled back to the stored norm*
 
 ## Battles
 
-<video src="https://github.com/Fer14/dragon/raw/main/video/battle.mp4" controls muted width="100%"></video>
+<video src="https://github.com/Fer14/dyno/raw/mobile-app/video/battle.mp4" controls muted width="100%"></video>
 
 > If the player above doesn't load, watch [`video/battle.mp4`](video/battle.mp4).
 
