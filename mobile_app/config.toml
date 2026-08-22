@@ -1,0 +1,10 @@
+[dragons]
+max_dragons = 20
+
+[eggs]
+random_hatch_minutes = 1
+bred_hatch_minutes = 1
+golden_chance_percent = 50
+
+[battle]
+turn_time_ms = 7000
