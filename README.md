@@ -83,7 +83,9 @@ Because the direction is untouched, the dragon keeps its visual identity but its
 
 ## Breeding
 
-https://github.com/user-attachments/assets/6194b78c-33fb-4a73-8d1e-50db306db503
+https://github.com/user-attachments/assets/7e588c5d-3bdf-48cd-aa62-9830caa20a1a
+
+
 
 Pick two dragons. The server interpolates their latents:
 
@@ -122,7 +124,8 @@ On decode the latent is dequantized and then **rescaled back to the stored norm*
 
 ## Battles
 
-https://github.com/user-attachments/assets/7e588c5d-3bdf-48cd-aa62-9830caa20a1a
+https://github.com/user-attachments/assets/6194b78c-33fb-4a73-8d1e-50db306db503
+
 
 Battles are **Breath Forge**: a simultaneous-reveal mind game, not a stat comparison. Each turn you and your opponent secretly pick one of three actions and they resolve together.
 
